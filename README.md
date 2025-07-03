@@ -61,9 +61,9 @@ and all recommended plugins
 1. Make sure initial requirements are taking care of.
 2. Log into your Jenkins server as the admin user.
 3. From the main Dashboard, click "New Item". Then click "Pipeline" and give the pipeline a name (e.g. full-devops-pipeline).
-4. In the "General" section, give the pipeline a description and check the "GitHub Project" box. Paste `https://github.com/w-burgis/devops-er-capstone` into the "Project url" field (or the URL of your forked repo).
+4. In the "General" section, give the pipeline a description and check the "GitHub Project" box. Paste `https://github.com/Weznoe/aws-final` into the "Project url" field (or the URL of your forked repo).
 5. In the "Triggers" section, select "GitHub hook trigger for GITScm polling".
-6. In the "Pipeline" section, select "Pipeline script from SCM." Under "SCM" choose "Git" and then paste `https://github.com/w-burgis/devops-er-capstone` (or the name of your forked repo) into the "Repository URL" field. For the "Branch Specifier", enter `*/main` and ensure `Jenkinsfile` is the value for "Script Path".
+6. In the "Pipeline" section, select "Pipeline script from SCM." Under "SCM" choose "Git" and then paste `https://github.com/Weznoe/aws-final` (or the name of your forked repo) into the "Repository URL" field. For the "Branch Specifier", enter `*/main` and ensure `Jenkinsfile` is the value for "Script Path".
 7. Click "Save".
 
 ### Initial Kubernetes Setup
