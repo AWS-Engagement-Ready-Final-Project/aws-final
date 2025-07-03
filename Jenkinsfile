@@ -259,7 +259,7 @@ pipeline {
             }
             steps {
                 echo "Creating EKS Cluster"
-                sh '${BIN_PATH}/eksctl create cluster -f kubernetes-config/cluster_config.yaml'       
+                sh '${BIN_PATH}/eksctl create cluster -f kubernetes-config/cluster.yaml'       
             }
         }
 
