@@ -51,7 +51,7 @@ pipeline {
             steps {
                 echo 'Cloning devops project repository'
                 git branch: 'main',
-                    url: 'https://github.com/w-burgis/devops-er-capstone.git'
+                    url: 'https://github.com/Weznoe/aws-final.git'
                 echo 'Was repo cloned?'
                 sh 'ls -a'
             }
