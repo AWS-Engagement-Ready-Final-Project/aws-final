@@ -1,27 +1,29 @@
 pipeline {
     agent any
 
-    environment {
-        PLATFORM = 'linux_amd64'        
-        BIN_PATH = '/var/lib/jenkins/.local/bin'
-    }
 
     parameters {
         string(name: 'AWS_REGION', defaultValue: 'us-east-1', description: 'AWS Region for all resources')
         string(name: 'AWS_CREDENTIALS_ID', defaultValue: 'aws-credentials', description: 'The ID of a Credentials resource for AWS (expecting kind AWS Credentials)')
     }
+    environment {
+        PLATFORM = 'linux_amd64'        
+        BIN_PATH = '/var/lib/jenkins/.local/bin'
+        AWS_REGION = params.AWS_REGION
+        AWS_CREDENTIALS_ID = params.AWS_CREDENTIALS_ID
+    }
 
     stages {
         stage('Configure AWS Credentials') {
             steps {
-                withCredentials([aws(credentialsId: "${params.AWS_CREDENTIALS_ID}", accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-                    sh """
+                withCredentials([aws(credentialsId: '$AWS_CREDENTIALS_ID', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                    sh '''
                         echo "Configuring AWS credentials"
                         aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
                         aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-                        aws configure set region ${params.AWS_REGION}
+                        aws configure set region $AWS_REGION
                         echo "AWS credentials configured"
-                    """
+                    '''
                 }
             }
         }
@@ -254,7 +256,7 @@ pipeline {
                 expression {
                     // check if the cluster exists, if it does, skip this stage
                     try {
-                        sh "aws eks describe-cluster --name aws-final-capstone --region ${params.AWS_REGION}"
+                        sh 'aws eks describe-cluster --name aws-final-capstone --region $AWS_REGION'
                         catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
                             // if the cluster exists, this will not throw an error
                             echo "EKS Cluster already exists, skipping creation"
@@ -279,9 +281,9 @@ pipeline {
                     echo "Deploying backend to EKS"
             
                     // Update kubeconfig to interact with the EKS cluster
-                    sh """
-                        aws eks update-kubeconfig --region ${params.AWS_REGION} --name aws-final-capstone
-                    """
+                    sh '''
+                        aws eks update-kubeconfig --region $AWS_REGION --name aws-final-capstone
+                    '''
 
                     def currentImage = sh(
                         script: """
@@ -320,9 +322,9 @@ pipeline {
                     echo "Deploying frontend to EKS"
             
                     // Update kubeconfig to interact with the EKS cluster
-                    sh """
-                        aws eks update-kubeconfig --region ${params.AWS_REGION} --name aws-final-capstone
-                    """
+                    sh '''
+                        aws eks update-kubeconfig --region $AWS_REGION --name aws-final-capstone
+                    '''
             
                     def currentImage = sh(
                         script: """
