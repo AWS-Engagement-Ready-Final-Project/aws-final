@@ -56,7 +56,7 @@ pipeline {
         stage('Install helm') {
             steps {
                 script {
-                    echo "Installing eksctl"
+                    echo "Installing helm"
                     sh 'curl -sLO "https://get.helm.sh/helm-v3.18.3-linux-amd64.tar.gz"'
                     sh 'tar -xzf helm-v3.18.3-linux-amd64.tar.gz -C /tmp && rm helm-v3.18.3-linux-amd64.tar.gz'
                     sh 'mv /tmp/helm ~/.local/bin/helm'                    
