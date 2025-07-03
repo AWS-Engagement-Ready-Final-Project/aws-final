@@ -59,7 +59,7 @@ pipeline {
                     echo "Installing helm"
                     sh 'curl -sLO "https://get.helm.sh/helm-v3.18.3-linux-amd64.tar.gz"'
                     sh 'tar -xzf helm-v3.18.3-linux-amd64.tar.gz -C /tmp && rm helm-v3.18.3-linux-amd64.tar.gz'
-                    sh 'mv /tmp/linux_amd64/helm ~/.local/bin/helm'                    
+                    sh 'mv /tmp/linux-amd64/helm ~/.local/bin/helm'                    
                     echo "Getting helm version"
                     sh '${BIN_PATH}/helm --version'
                 }
