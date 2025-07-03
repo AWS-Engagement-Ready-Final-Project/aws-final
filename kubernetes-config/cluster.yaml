@@ -2,7 +2,7 @@ apiVersion: eksctl.io/v1alpha5
 kind: ClusterConfig
 
 metadata:
-  name: wcb-devops-capstone
+  name: aws-final-capstone
   region: us-east-1
   version: "1.30"
 
@@ -16,12 +16,12 @@ iam:
 
   serviceAccounts:
   - metadata:
-      name: cluster-autoscaler-wcb
+      name: aws-final-autoscale
       namespace: kube-system
     wellKnownPolicies:
       autoScaler: true
   - metadata:
-      name: aws-load-balancer-controller-wcb
+      name: aws-final-load-balancer-controller
       namespace: kube-system
     wellKnownPolicies:
       awsLoadBalancerController: true

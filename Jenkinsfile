@@ -244,7 +244,7 @@ pipeline {
                 expression {
                     // check if the cluster exists, if it does, skip this stage
                     try {
-                        sh "aws eks describe-cluster --name wcb-devops-capstone --region ${params.AWS_REGION}"
+                        sh "aws eks describe-cluster --name aws-final-capstone --region ${params.AWS_REGION}"
                         catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
                             // if the cluster exists, this will not throw an error
                             echo "EKS Cluster already exists, skipping creation"
@@ -270,7 +270,7 @@ pipeline {
             
                     // Update kubeconfig to interact with the EKS cluster
                     sh """
-                        aws eks update-kubeconfig --region ${params.AWS_REGION} --name wcb-devops-capstone
+                        aws eks update-kubeconfig --region ${params.AWS_REGION} --name aws-final-capstone
                     """
 
                     def currentImage = sh(
@@ -311,7 +311,7 @@ pipeline {
             
                     // Update kubeconfig to interact with the EKS cluster
                     sh """
-                        aws eks update-kubeconfig --region ${params.AWS_REGION} --name wcb-devops-capstone
+                        aws eks update-kubeconfig --region ${params.AWS_REGION} --name aws-final-capstone
                     """
             
                     def currentImage = sh(
