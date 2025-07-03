@@ -42,13 +42,23 @@ pipeline {
             steps {
                 script {
                     echo "Installing eksctl"
-                    sh 'curl -sLO "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_${PLATFORM}.tar.gz"'                          
+                    sh 'curl -sLO "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_${PLATFORM}.tar.gz"'
                     sh 'tar -xzf eksctl_$PLATFORM.tar.gz -C /tmp && rm eksctl_$PLATFORM.tar.gz'
                     sh 'mv /tmp/eksctl ~/.local/bin/eksctl'                    
                     echo "Getting eksctl version"
                     sh '${BIN_PATH}/eksctl version'
                 }                
             }
+        }
+
+        stage('Install helm') {
+                script {
+                    echo "Installing eksctl"
+                    sh 'curl -sLO "https://get.helm.sh/helm-v3.18.3-linux-amd64.tar.gz"'
+                    sh 'tar -xzf helm-v3.18.3-linux-amd64.tar.gz -C /tmp && rm helm-v3.18.3-linux-amd64.tar.gz'
+                    sh 'mv /tmp/helm ~/.local/bin/helm'                    
+                    echo "Getting helm version"
+                    sh '${BIN_PATH}/helm --version'
         }
 
         stage('Clone the devops repo') {
