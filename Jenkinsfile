@@ -8,7 +8,7 @@ pipeline {
 
     parameters {
         string(name: 'AWS_REGION', defaultValue: 'us-east-1', description: 'AWS Region for all resources')
-        string(name: 'AWS_CREDENTIALS_ID', defaultValue: 'aws-creds', description: 'The ID of a Credentials resource for AWS (expecting kind AWS Credentials)')
+        string(name: 'AWS_CREDENTIALS_ID', defaultValue: 'aws-credentials', description: 'The ID of a Credentials resource for AWS (expecting kind AWS Credentials)')
     }
 
     stages {

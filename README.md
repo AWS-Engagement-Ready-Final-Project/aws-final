@@ -62,7 +62,7 @@ and all recommended plugins
 1. In `Manage Jenkins` -> `Credentials`, navigate to the `System` Store -> `Global credentials (unrestricted)`, and add the following credentials:
     1. AWS access key
         - Kind: `AWS Credentials`
-        - ID: `aws-creds`
+        - ID: `aws-credentials`
         - Access Key ID: `<your access key id>`
         - Secret Access Key: `<your secret access key>`
 
