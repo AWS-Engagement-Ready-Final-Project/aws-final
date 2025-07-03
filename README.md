@@ -57,6 +57,14 @@ and all recommended plugins
 4. Select `application/json` for the content type.
 5. Create the webhook.
 
+### Configuring Jenkins Credentials
+1. In `Manage Jenkins` -> `Credentials`, navigate to the `System` Store -> `Global credentials (unrestricted)`, and add the following credentials:
+    1. AWS access key
+        - Kind: `AWS Credentials`
+        - ID: `aws-creds`
+        - Access Key ID: `<your access key id>`
+        - Secret Access Key: `<your secret access key>`
+
 ### Setting Up the Pipeline in Jenkins
 1. Make sure initial requirements are taking care of.
 2. Log into your Jenkins server as the admin user.

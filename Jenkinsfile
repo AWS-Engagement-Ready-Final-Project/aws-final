@@ -8,12 +8,13 @@ pipeline {
 
     parameters {
         string(name: 'AWS_REGION', defaultValue: 'us-east-1', description: 'AWS Region for all resources')
+        string(name: 'AWS_CREDENTIALS_ID', defaultValue: 'aws-creds', description: 'The ID of a Credentials resource for AWS (expecting kind AWS Credentials)')
     }
 
     stages {
         stage('Configure AWS Credentials') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'aws-creds', usernameVariable: 'AWS_ACCESS_KEY_ID', passwordVariable: 'AWS_SECRET_ACCESS_KEY')]) {
+                withCredentials([aws(credentialsId: "{params.AWS_CREDENTIALS_ID}", acecssKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                     sh '''
                         echo "Configuring AWS credentials"
                         aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
