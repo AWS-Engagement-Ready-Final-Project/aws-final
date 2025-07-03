@@ -278,17 +278,46 @@ pipeline {
             }
         }
 
+        stage("Check for helm installation") {
+            steps {
+                script {
+                    def exists = sh(script: 'helm status events-app')
+                    echo exists
+                    if (exists) {
+                        echo "events-app already installed"
+                        env.EVENTS-APP-EXISTS='true'
+                    } else {
+                        echo "events-app not yet installed"
+                        env.EVENTS-APP-EXISTS='false'
+                    }
+                    
+                }
+            }
+
+        }
         stage("Deploy events-app") {
             steps {
                 dir("helm/events-app") {
                     script {
                         sh '${BIN_PATH}/helm dependency update'
-                        sh '''
-                        ${BIN_PATH}/helm install events-app . \
-                        --set website.image.tag=$FRONTEND_IMAGE_TAG \
-                        --set backend.image.tag=$BACKEND_IMAGE_TAG \
-                        --set eventsJob.image.tag='1.0'
-                        '''
+                        if (env.EVENTS-APP-EXISTS) {
+                            sh '''
+                            ${BIN_PATH}/helm install events-app . \
+                            --set website.image.tag=$FRONTEND_IMAGE_TAG \
+                            --set backend.image.tag=$BACKEND_IMAGE_TAG \
+                            --set eventsJob.image.tag='1.0'
+                            '''
+                        } else {
+                            def mariadb_root_password= sh(script: '$(kubectl get secret --namespace "default" events-app-mariadb -o jsonpath="{.data.mariadb-root-password}" | base64 -d)')
+                            env.MARIADB_ROOT_PASS = mariadb_root_password
+                            sh '''
+                            ${BIN_PATH}/helm upgrade events-app . \
+                            --set website.image.tag=$FRONTEND_IMAGE_TAG \
+                            --set backend.image.tag=$BACKEND_IMAGE_TAG \
+                            --set eventsJob.image.tag='1.0'
+                            --set mariadb.auth.rootPassword=$MARIADB_ROOT_PASS
+                            '''
+                        }
                     }
                 }
             }
