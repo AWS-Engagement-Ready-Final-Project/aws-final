@@ -281,7 +281,7 @@ pipeline {
         stage("Check for helm installation") {
             steps {
                 script {
-                    def exists = sh(script: 'helm status events-app')
+                    def exists = sh(script: '${BIN_PATH}/helm status events-app')
                     echo exists
                     if (exists) {
                         echo "events-app already installed"
