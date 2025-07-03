@@ -22,6 +22,7 @@ In order to run test this application, you will need to have the following:
 2. An AWS server set up with Docker, Node, AWS CLI, eksctl/kubectl, Java, and Jenkins installed, as explained in the Activity 7 instructions for the course
 
 Ensure that your Jenkins server has all of the necessary pipeline and GitHub plugins installed, including the following:
+- AWS Credentials Plugin
 - Configuration as Code Plugin
 - Credentials Plugin
 - Credentials Binding Plugin
