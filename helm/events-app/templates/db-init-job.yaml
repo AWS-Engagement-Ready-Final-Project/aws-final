@@ -1,0 +1,25 @@
+{{- $fullname := include "events-app.fullname" . }}
+{{- $mariadbName := print $fullname "-mariadb" }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "{{ $fullname }}-db-initializer"
+spec:
+  template:
+    spec:
+      containers:
+      - image: "{{ .Values.eventsJob.image.repository }}:{{ .Values.eventsJob.image.tag }}"
+        name: "{{ $fullname }}-db-init-job"
+        imagePullPolicy: "Always"
+        env:
+        - name: DBHOST
+          value: {{ $mariadbName }}
+        - name: DBUSER
+          value: "root"
+        - name: DBPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ $mariadbName }}
+              key: mariadb-root-password
+      restartPolicy: Never
+  backoffLimit: 4

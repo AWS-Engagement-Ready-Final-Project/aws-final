@@ -1,0 +1,40 @@
+# Default values for events-app.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Configuration options for events-website
+website:
+  # This controls how many events-website pods to deploy
+  replicaCount: 3
+  image: 
+    repository: wburgis/devops-er-frontend
+    tag: ""
+
+  # The public port to host on
+  port: 80
+  containerPort: 8080
+
+  # If provided, will deploy a duplicate deployment of a different version
+  blueGreenTag: ""
+  # If provided, will point the load balancer at a different version tag than specified in image.tag
+  blueGreenPublicTag: ""
+
+# Configuration options for events-api
+api:
+  # This controls how many events-website pods to deploy
+  replicaCount: 3
+  image: 
+    repository: wburgis/devops-er-backend
+    tag: ""
+
+  containerPort: 8082
+  
+# Configuration options for events-job
+eventsJob: 
+  image: 
+    repository: 360990851379.dkr.ecr.us-east-1.amazonaws.com/events-job
+    tag: ""
+
+# This is to override the chart name.
+nameOverride: ""
+fullnameOverride: ""

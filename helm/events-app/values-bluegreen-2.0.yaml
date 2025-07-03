@@ -1,0 +1,14 @@
+website:
+  image: 
+    tag: "v1.0"
+
+  blueGreenTag: "v2.0"
+  blueGreenPublicTag: "v2.0"
+
+api:
+  image: 
+    tag: "v1.0"
+  
+eventsJob: 
+  image: 
+    tag: "v1.0"

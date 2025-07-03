@@ -1,0 +1,20 @@
+{{- $name := "website"}}
+{{- $containerPort := .Values.website.containerPort }}
+{{- $fullname := include "events-app.fullname" . }}
+{{- $apiName :=  print $fullname "-api" }}
+{{- $apiAddr := print "http://" $apiName "-svc:" .Values.api.containerPort }}
+{{- $server := dict "name" "SERVER" "value" $apiAddr}}
+{{- $env := list $server}}
+{{- $data := dict "Globals" . "name" $name "image" .Values.website.image "port" $containerPort  "env" $env "replicaCount" .Values.website.replicaCount}}
+{{- include "events-app.deployment" $data }}
+
+{{- if .Values.website.blueGreenTag }}
+---
+{{- $image := dict "repository" .Values.website.image.repository "tag" .Values.website.blueGreenTag }}
+{{- $dataBlueGreen := dict "Globals" . "name" $name "image" $image "port" $containerPort "env" $env "replicaCount" .Values.website.replicaCount}}
+{{- include "events-app.deployment" $dataBlueGreen }}
+{{- end }}
+---
+{{- $targetVer :=  .Values.website.blueGreenPublicTag | default .Values.website.image.tag  }}
+{{- $data := dict "Globals" . "name" $name "type" "LoadBalancer" "port" .Values.website.port "targetPort" $containerPort "ver" $targetVer }}
+{{- include "events-app.service" $data }}

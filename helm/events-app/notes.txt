@@ -1,0 +1,532 @@
+---
+# Source: events-app/charts/mariadb/templates/networkpolicy.yaml
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: events-app-mariadb
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: events-app
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: mariadb
+    app.kubernetes.io/version: 11.4.6
+    helm.sh/chart: mariadb-20.5.5
+    app.kubernetes.io/part-of: mariadb
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: events-app
+      app.kubernetes.io/managed-by: Helm
+      app.kubernetes.io/name: mariadb
+      app.kubernetes.io/version: 11.4.6
+      helm.sh/chart: mariadb-20.5.5
+  policyTypes:
+    - Ingress
+    - Egress
+  egress:
+    - {}
+  ingress:
+    - ports:
+        - port: 3306
+        - port: 3306
+---
+# Source: events-app/charts/mariadb/templates/primary/pdb.yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: events-app-mariadb
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: events-app
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: mariadb
+    app.kubernetes.io/version: 11.4.6
+    helm.sh/chart: mariadb-20.5.5
+    app.kubernetes.io/part-of: mariadb
+    app.kubernetes.io/component: primary
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: events-app
+      app.kubernetes.io/name: mariadb
+      app.kubernetes.io/component: primary
+---
+# Source: events-app/charts/mariadb/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: events-app-mariadb
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: events-app
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: mariadb
+    app.kubernetes.io/version: 11.4.6
+    helm.sh/chart: mariadb-20.5.5
+    app.kubernetes.io/part-of: mariadb
+automountServiceAccountToken: false
+---
+# Source: events-app/charts/mariadb/templates/secrets.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: events-app-mariadb
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: events-app
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: mariadb
+    app.kubernetes.io/version: 11.4.6
+    helm.sh/chart: mariadb-20.5.5
+    app.kubernetes.io/part-of: mariadb
+type: Opaque
+data:
+  mariadb-root-password: "dndoREtnbkJQZA=="
+---
+# Source: events-app/charts/mariadb/templates/primary/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: events-app-mariadb
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: events-app
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: mariadb
+    app.kubernetes.io/version: 11.4.6
+    helm.sh/chart: mariadb-20.5.5
+    app.kubernetes.io/part-of: mariadb
+    app.kubernetes.io/component: primary
+data:
+  my.cnf: |-
+    [mysqld]
+    skip-name-resolve
+    explicit_defaults_for_timestamp
+    basedir=/opt/bitnami/mariadb
+    datadir=/bitnami/mariadb/data
+    plugin_dir=/opt/bitnami/mariadb/plugin
+    port=3306
+    socket=/opt/bitnami/mariadb/tmp/mysql.sock
+    tmpdir=/opt/bitnami/mariadb/tmp
+    max_allowed_packet=16M
+    bind-address=*
+    pid-file=/opt/bitnami/mariadb/tmp/mysqld.pid
+    log-error=/opt/bitnami/mariadb/logs/mysqld.log
+    character-set-server=UTF8
+    collation-server=utf8_general_ci
+    slow_query_log=0
+    long_query_time=10.0
+    binlog_expire_logs_seconds=2592000
+    
+    [client]
+    port=3306
+    socket=/opt/bitnami/mariadb/tmp/mysql.sock
+    default-character-set=UTF8
+    plugin_dir=/opt/bitnami/mariadb/plugin
+    
+    [manager]
+    port=3306
+    socket=/opt/bitnami/mariadb/tmp/mysql.sock
+    pid-file=/opt/bitnami/mariadb/tmp/mysqld.pid
+---
+# Source: events-app/charts/mariadb/templates/headless-svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: events-app-mariadb-headless
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: events-app
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: mariadb
+    app.kubernetes.io/version: 11.4.6
+    helm.sh/chart: mariadb-20.5.5
+    app.kubernetes.io/part-of: mariadb
+spec:
+  type: ClusterIP
+  publishNotReadyAddresses: true
+  clusterIP: None
+  ports:
+    - name: mysql
+      port: 3306
+      protocol: TCP
+      targetPort: mysql
+  selector:
+    app.kubernetes.io/instance: events-app
+    app.kubernetes.io/name: mariadb
+    app.kubernetes.io/part-of: mariadb
+---
+# Source: events-app/charts/mariadb/templates/primary/svc.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: events-app-mariadb
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: events-app
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: mariadb
+    app.kubernetes.io/version: 11.4.6
+    helm.sh/chart: mariadb-20.5.5
+    app.kubernetes.io/part-of: mariadb
+    app.kubernetes.io/component: primary
+  annotations:
+spec:
+  type: ClusterIP
+  sessionAffinity: None
+  ports:
+    - name: mysql
+      port: 3306
+      protocol: TCP
+      targetPort: mysql
+      nodePort: null
+  selector:
+    app.kubernetes.io/instance: events-app
+    app.kubernetes.io/name: mariadb
+    app.kubernetes.io/component: primary
+---
+# Source: events-app/templates/api.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: events-app-api-svc
+  labels:
+    app: events-app-api-svc
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8082
+      targetPort: 8082
+      protocol: TCP
+  selector:
+    app: events-app-api 
+    ver: v1.0
+---
+# Source: events-app/templates/website.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: events-app-website-svc
+  labels:
+    app: events-app-website-svc
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+  selector:
+    app: events-app-website 
+    ver: v1.0
+---
+# Source: events-app/templates/api.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: events-app-api-v1-0
+  labels:
+    app: events-app-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: events-app-api
+      ver: v1.0
+  template:
+    metadata:
+      labels:
+        app: events-app-api
+        ver: v1.0
+    spec:
+      containers:
+        - name: events-app-api
+          imagePullPolicy: "Always"
+          image: "360871920119.dkr.ecr.us-east-1.amazonaws.com/events-api:v1.0"
+          ports:
+            - containerPort: 8082
+          env:
+          - name: DBHOST
+            value: events-app-mariadb
+          - name: DBUSER
+            value: root
+          - name: DBPASSWORD
+            valueFrom:
+              secretKeyRef:
+                key: mariadb-root-password
+                name: events-app-mariadb
+          - name: DBDATABASE
+            value: events_db
+---
+# Source: events-app/templates/website.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: events-app-website-v1-0
+  labels:
+    app: events-app-website
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: events-app-website
+      ver: v1.0
+  template:
+    metadata:
+      labels:
+        app: events-app-website
+        ver: v1.0
+    spec:
+      containers:
+        - name: events-app-website
+          imagePullPolicy: "Always"
+          image: "360871920119.dkr.ecr.us-east-1.amazonaws.com/events-website:v1.0"
+          ports:
+            - containerPort: 8080
+          env:
+          - name: SERVER
+            value: http://events-app-api-svc:8082
+---
+# Source: events-app/charts/mariadb/templates/primary/statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: events-app-mariadb
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: events-app
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: mariadb
+    app.kubernetes.io/version: 11.4.6
+    helm.sh/chart: mariadb-20.5.5
+    app.kubernetes.io/part-of: mariadb
+    app.kubernetes.io/component: primary
+spec:
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: events-app
+      app.kubernetes.io/name: mariadb
+      app.kubernetes.io/part-of: mariadb
+      app.kubernetes.io/component: primary
+  serviceName: events-app-mariadb-headless
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        checksum/configuration: ea3276bb93268421cfce68727c564ec86d416ff308ab4624747c0d4430fab198
+      labels:
+        app.kubernetes.io/instance: events-app
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/name: mariadb
+        app.kubernetes.io/version: 11.4.6
+        helm.sh/chart: mariadb-20.5.5
+        app.kubernetes.io/part-of: mariadb
+        app.kubernetes.io/component: primary
+    spec:
+      
+      automountServiceAccountToken: false
+      serviceAccountName: events-app-mariadb
+      affinity:
+        podAffinity:
+          
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/instance: events-app
+                    app.kubernetes.io/name: mariadb
+                    app.kubernetes.io/component: primary
+                topologyKey: kubernetes.io/hostname
+              weight: 1
+        nodeAffinity:
+          
+      securityContext:
+        fsGroup: 1001
+        fsGroupChangePolicy: Always
+        supplementalGroups: []
+        sysctls: []
+      initContainers:
+        - name: preserve-logs-symlinks
+          image: docker.io/bitnami/mariadb:11.4.6-debian-12-r0
+          imagePullPolicy: "IfNotPresent"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seLinuxOptions: {}
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            limits:
+              cpu: 750m
+              ephemeral-storage: 2Gi
+              memory: 768Mi
+            requests:
+              cpu: 500m
+              ephemeral-storage: 50Mi
+              memory: 512Mi
+          command:
+            - /bin/bash
+          args:
+            - -ec
+            - |
+              #!/bin/bash
+
+              . /opt/bitnami/scripts/libfs.sh
+              # We copy the logs folder because it has symlinks to stdout and stderr
+              if ! is_dir_empty /opt/bitnami/mariadb/logs; then
+                cp -r /opt/bitnami/mariadb/logs /emptydir/app-logs-dir
+              fi
+          volumeMounts:
+            - name: empty-dir
+              mountPath: /emptydir
+      containers:
+        - name: mariadb
+          image: docker.io/bitnami/mariadb:11.4.6-debian-12-r0
+          imagePullPolicy: "IfNotPresent"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsGroup: 1001
+            runAsNonRoot: true
+            runAsUser: 1001
+            seLinuxOptions: {}
+            seccompProfile:
+              type: RuntimeDefault
+          env:
+            - name: BITNAMI_DEBUG
+              value: "false"
+            - name: MARIADB_ROOT_PASSWORD_FILE
+              value: /opt/bitnami/mariadb/secrets/mariadb-root-password
+            - name: MARIADB_DATABASE
+              value: "my_database"
+            - name: MARIADB_ENABLE_SSL
+              value: "no"
+          ports:
+            - name: mysql
+              containerPort: 3306
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 120
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+            exec:
+              command:
+                - /bin/bash
+                - -ec
+                - |
+                  password_aux="${MARIADB_ROOT_PASSWORD:-}"
+                  if [[ -f "${MARIADB_ROOT_PASSWORD_FILE:-}" ]]; then
+                      password_aux=$(cat "$MARIADB_ROOT_PASSWORD_FILE")
+                  fi
+                  mariadb-admin status -uroot -p"${password_aux}"
+          readinessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+            exec:
+              command:
+                - /bin/bash
+                - -ec
+                - |
+                  password_aux="${MARIADB_ROOT_PASSWORD:-}"
+                  if [[ -f "${MARIADB_ROOT_PASSWORD_FILE:-}" ]]; then
+                      password_aux=$(cat "$MARIADB_ROOT_PASSWORD_FILE")
+                  fi
+                  mariadb-admin ping -uroot -p"${password_aux}"
+          resources:
+            limits:
+              cpu: 750m
+              ephemeral-storage: 2Gi
+              memory: 768Mi
+            requests:
+              cpu: 500m
+              ephemeral-storage: 50Mi
+              memory: 512Mi
+          volumeMounts:
+            - name: data
+              mountPath: /bitnami/mariadb
+            - name: config
+              mountPath: /opt/bitnami/mariadb/conf/my.cnf
+              subPath: my.cnf
+            - name: mariadb-credentials
+              mountPath: /opt/bitnami/mariadb/secrets/
+            - name: empty-dir
+              mountPath: /tmp
+              subPath: tmp-dir
+            - name: empty-dir
+              mountPath: /opt/bitnami/mariadb/conf
+              subPath: app-conf-dir
+            - name: empty-dir
+              mountPath: /opt/bitnami/mariadb/tmp
+              subPath: app-tmp-dir
+            - name: empty-dir
+              mountPath: /opt/bitnami/mariadb/logs
+              subPath: app-logs-dir
+      volumes:
+        - name: empty-dir
+          emptyDir: {}
+        - name: config
+          configMap:
+            name: events-app-mariadb
+        - name: mariadb-credentials
+          secret:
+            secretName: events-app-mariadb
+            items:
+              - key: mariadb-root-password
+                path: mariadb-root-password
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          app.kubernetes.io/instance: events-app
+          app.kubernetes.io/name: mariadb
+          app.kubernetes.io/component: primary
+      spec:
+        accessModes:
+          - "ReadWriteOnce"
+        resources:
+          requests:
+            storage: "8Gi"
+---
+# Source: events-app/templates/db-init-job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: "events-app-db-initializer"
+spec:
+  template:
+    spec:
+      containers:
+      - image: "360871920119.dkr.ecr.us-east-1.amazonaws.com/events-job:v1.0"
+        name: "events-app-db-init-job"
+        imagePullPolicy: "Always"
+        env:
+        - name: DBHOST
+          value: events-app-mariadb
+        - name: DBUSER
+          value: "root"
+        - name: DBPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: events-app-mariadb
+              key: mariadb-root-password
+      restartPolicy: Never
+  backoffLimit: 4
