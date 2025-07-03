@@ -7,6 +7,11 @@ pipeline {
         AWS_REGION = 'us-east-1'
     }
 
+    parameters {
+        string(name: 'AWS_REGION', defaultValue: 'us-east-1', description: 'AWS Region for EKS cluster')
+        string(name: 'AWS_REGION', defaultValue: 'us-east-1', description: 'AWS Region for EKS cluster')
+    }
+
     stages {
         stage('Configure AWS Credentials') {
             steps {
@@ -15,7 +20,7 @@ pipeline {
                         echo "Configuring AWS credentials"
                         aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
                         aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-                        aws configure set region ${AWS_REGION}
+                        aws configure set region ${params.AWS_REGION}
                         echo "AWS credentials configured"
                     '''
                 }
@@ -51,7 +56,7 @@ pipeline {
             steps {
                 echo 'Cloning devops project repository'
                 git branch: 'main',
-                    url: 'https://github.com/Weznoe/aws-final.git'
+                    url: 'https://github.com/AWS-Engagement-Ready-Final-Project/aws-final.git'
                 echo 'Was repo cloned?'
                 sh 'ls -a'
             }
