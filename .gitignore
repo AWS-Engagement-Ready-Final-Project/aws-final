@@ -1,0 +1,7 @@
+logs
+*.log
+npm-debug.log*
+backend/node_modules/
+frontend/node_modules/
+.nyc_output/
+tmp/

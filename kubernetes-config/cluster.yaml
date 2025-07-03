@@ -1,0 +1,71 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: wcb-devops-capstone
+  region: us-east-1
+  version: "1.30"
+
+kubernetesNetworkConfig: 
+  serviceIPv4CIDR: 10.100.0.0/16
+
+availabilityZones: ["us-east-1a", "us-east-1b"]
+    
+iam:
+  withOIDC: true
+
+  serviceAccounts:
+  - metadata:
+      name: cluster-autoscaler-wcb
+      namespace: kube-system
+    wellKnownPolicies:
+      autoScaler: true
+  - metadata:
+      name: aws-load-balancer-controller-wcb
+      namespace: kube-system
+    wellKnownPolicies:
+      awsLoadBalancerController: true
+
+addons:
+  - name: vpc-cni
+    version: latest
+  - name: coredns
+    version: latest
+  - name: kube-proxy
+    version: latest
+  - name: aws-ebs-csi-driver
+    version: latest
+  - name: amazon-cloudwatch-observability
+    version: latest
+ 
+managedNodeGroups:
+
+  - name: nodegroup-1
+    spot: true
+    instanceTypes: ["t2.medium"]
+    minSize: 2
+    desiredCapacity: 2
+    maxSize: 4
+    volumeEncrypted: true
+    privateNetworking: true
+    iam:
+      withAddonPolicies:
+        albIngress: true
+        cloudWatch: true
+        autoScaler: true
+        ebs: true
+        xRay: true
+ 
+fargateProfiles:
+  - name: on-fargate
+    selectors:
+      - namespace: on-fargate
+  - name: myprofile
+    selectors: 
+    - namespace: prod
+      labels: 
+       stack: frontend
+
+cloudWatch:
+    clusterLogging:
+        enableTypes: ["api", "audit", "authenticator", "controllerManager", "scheduler"]
