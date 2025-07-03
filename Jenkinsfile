@@ -282,9 +282,9 @@ pipeline {
             steps {
                 dir("helm/events-app") {
                     script {
-                        sh 'helm dependency update'
+                        sh '${BIN_PATH}/helm dependency update'
                         sh '''
-                        helm install events-app . \
+                        ${BIN_PATH}/helm install events-app . \
                         --set website.image.tag=$FRONTEND_IMAGE_TAG \
                         --set backend.image.tag=$BACKEND_IMAGE_TAG \
                         --set eventsJob.image.tag=v1.0
