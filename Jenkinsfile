@@ -30,7 +30,7 @@ pipeline {
 
         stage('Install kubectl') {
             steps {            
-                echo "Installing eksctl"
+                echo "Installing kubectl"
                 sh 'curl -O "https://s3.us-west-2.amazonaws.com/amazon-eks/1.33.0/2025-05-01/bin/linux/amd64/kubectl"'
                 sh 'chmod +x ./kubectl'                                   
                 sh 'mkdir -p ~/.local/bin'                
