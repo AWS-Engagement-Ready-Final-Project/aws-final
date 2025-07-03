@@ -1,11 +1,11 @@
 pipeline {
     agent any
 
-
     parameters {
         string(name: 'AWS_REGION', defaultValue: 'us-east-1', description: 'AWS Region for all resources')
         string(name: 'AWS_CREDENTIALS_ID', defaultValue: 'aws-credentials', description: 'The ID of a Credentials resource for AWS (expecting kind AWS Credentials)')
     }
+
     environment {
         PLATFORM = 'linux_amd64'        
         BIN_PATH = '/var/lib/jenkins/.local/bin'
@@ -61,6 +61,7 @@ pipeline {
                     sh 'mv /tmp/helm ~/.local/bin/helm'                    
                     echo "Getting helm version"
                     sh '${BIN_PATH}/helm --version'
+            }
         }
 
         stage('Clone the devops repo') {
@@ -362,3 +363,4 @@ pipeline {
         }
     }
 }
+
