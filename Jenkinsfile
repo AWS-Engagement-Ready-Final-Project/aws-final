@@ -287,7 +287,7 @@ pipeline {
                         ${BIN_PATH}/helm install events-app . \
                         --set website.image.tag=$FRONTEND_IMAGE_TAG \
                         --set backend.image.tag=$BACKEND_IMAGE_TAG \
-                        --set eventsJob.image.tag=v1.0
+                        --set eventsJob.image.tag='1.0'
                         '''
                     }
                 }
