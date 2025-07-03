@@ -9,8 +9,8 @@ pipeline {
     environment {
         PLATFORM = 'linux_amd64'        
         BIN_PATH = '/var/lib/jenkins/.local/bin'
-        AWS_REGION = params.AWS_REGION
-        AWS_CREDENTIALS_ID = params.AWS_CREDENTIALS_ID
+        AWS_REGION = "${params.AWS_REGION}"
+        AWS_CREDENTIALS_ID = "${params.AWS_CREDENTIALS_ID}"
     }
 
     stages {
