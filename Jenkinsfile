@@ -278,6 +278,22 @@ pipeline {
             }
         }
 
+        stage("Deploy events-app") {
+            steps {
+                dir("helm/events-app") {
+                    script {
+                        sh 'helm dependency update'
+                        sh '''
+                        helm install events-app . \
+                        --set website.image.tag=$FRONTEND_IMAGE_TAG \
+                        --set backend.image.tag=$BACKEND_IMAGE_TAG \
+                        --set eventsJob.image.tag=v1.0
+                        '''
+                    }
+                }
+            }
+        }
+
         stage('Deploy backend to EKS') {
             steps {
                 script {
