@@ -14,6 +14,7 @@ pipeline {
         string(name: 'BACKEND_IMAGE_REPO', defaultValue: 'wburgis/devops-er-backend', description: 'The repo to push the events-app backend image to')
         string(name: 'DB_INIT_IMAGE_REPO', defaultValue: '360990851379.dkr.ecr.us-east-1.amazonaws.com/events-job', description: 'The repo to pull the events-app db-init job from')
         choice(name: 'IMAGE_REPO_TYPE', choices: ['dockerhub', 'ecr'], description: 'The type of image repository to use (dockerhub[default] or ecr)')
+        string(name: 'DOCKERHUB_CREDENTIALS_ID', defaultValue: '5cd81998-a923-4dc4-8b0c-a3d5239f9661', description: 'The credentials to authenticate with DockerHub (if using dockerhub as the image repo type)')
         booleanParam(name: 'SHOULD_BUILD_IMAGES', defaultValue: true, description: 'Whether this pipeline should build new images before deploying')
         // in a real-world pipeline, the code for these images would live in separate repos and be versioned independently
         string(name: 'FRONTEND_VERSION_TAG', defaultValue: '1.0', description: 'The version tag to use to build and pull the frontend docker image')
@@ -169,7 +170,7 @@ pipeline {
                 expression { params.SHOULD_BUILD_IMAGES && params.IMAGE_REPO_TYPE == 'dockerhub'}
             }
             steps {
-                withCredentials([usernamePassword(credentialsId: '5cd81998-a923-4dc4-8b0c-a3d5239f9661', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                withCredentials([usernamePassword(credentialsId: params.DOCKERHUB_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
                     sh """
                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
                         docker push ${params.BACKEND_IMAGE_REPO}:${params.BACKEND_VERSION_TAG}
@@ -183,7 +184,8 @@ pipeline {
                 expression { params.SHOULD_BUILD_IMAGES && params.IMAGE_REPO_TYPE == 'ecr'}
             }
             steps {
-                sh 'echo "Pushing backend Docker image to ECR"'
+                sh "aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin ${params.BACKEND_IMAGE_REPO}"
+                sh "docker push ${params.BACKEND_IMAGE_REPO}:${params.BACKEND_VERSION_TAG}"
             }
         }
         
