@@ -158,7 +158,7 @@ pipeline {
                 script {
                     echo 'Building backend Docker image'
                     dir('backend') {
-                        sh "docker build -t ${params.BACKEND_IMAGE_+REPO}:${params.BACKEND_VERSION_TAG} ."
+                        sh "docker build -t ${params.BACKEND_IMAGE_REPO}:${params.BACKEND_VERSION_TAG} ."
                     }
                 }
             }
