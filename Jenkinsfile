@@ -184,7 +184,7 @@ pipeline {
                 expression { params.SHOULD_BUILD_IMAGES && params.IMAGE_REPO_TYPE == 'ecr'}
             }
             steps {
-                sh "aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin ${params.BACKEND_IMAGE_REPO}"
+                sh "aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${params.BACKEND_IMAGE_REPO}"
                 sh "docker push ${params.BACKEND_IMAGE_REPO}:${params.BACKEND_VERSION_TAG}"
             }
         }
