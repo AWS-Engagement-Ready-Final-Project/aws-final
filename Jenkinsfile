@@ -195,74 +195,74 @@ pipeline {
         }
 
 
-//         stage('Create EKS Cluster') {
-//             when {
-//                 expression {
-//                     // check if the cluster exists, if it does, skip this stage
-//                     try {
-//                         sh 'aws eks describe-cluster --name aws-final-capstone --region $AWS_REGION'
-//                         catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
-//                             // if the cluster exists, this will not throw an error
-//                             echo "EKS Cluster already exists, skipping creation"
-//                             // return false to skip the stage
-//                             return false
-//                         }
-//                         return false // cluster exists, skip creation
-//                     } catch (Exception e) {
-//                         return true // cluster does not exist, proceed with creation
-//                     }
-//                 }
-//             }
-//             steps {
-//                 echo "Creating EKS Cluster"
-//                 sh '${BIN_PATH}/eksctl create cluster -f kubernetes-config/cluster.yaml'       
-//             }
-//         }
+        stage('Create EKS Cluster') {
+            when {
+                expression {
+                    // check if the cluster exists, if it does, skip this stage
+                    try {
+                        sh 'aws eks describe-cluster --name aws-final-capstone --region $AWS_REGION'
+                        catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+                            // if the cluster exists, this will not throw an error
+                            echo "EKS Cluster already exists, skipping creation"
+                            // return false to skip the stage
+                            return false
+                        }
+                        return false // cluster exists, skip creation
+                    } catch (Exception e) {
+                        return true // cluster does not exist, proceed with creation
+                    }
+                }
+            }
+            steps {
+                echo "Creating EKS Cluster"
+                sh '${BIN_PATH}/eksctl create cluster -f kubernetes-config/cluster.yaml'       
+            }
+        }
 
-//         stage("Check for helm installation") {
-//             steps {
-//                 script {
-//                     def exists = sh(script: '${BIN_PATH}/helm status events-app')
-//                     echo exists
-//                     if (exists) {
-//                         echo "events-app already installed"
-//                         env.EVENTS_APP_EXISTS = 'true'
-//                     } else {
-//                         echo "events-app not yet installed"
-//                         env.EVENTS_APP_EXISTS = 'false'
-//                     }
+        stage("Check for helm installation") {
+            steps {
+                script {
+                    def exists = sh(script: '${BIN_PATH}/helm status events-app')
+                    echo exists
+                    if (exists) {
+                        echo "events-app already installed"
+                        env.EVENTS_APP_EXISTS = 'true'
+                    } else {
+                        echo "events-app not yet installed"
+                        env.EVENTS_APP_EXISTS = 'false'
+                    }
                     
-//                 }
-//             }
+                }
+            }
 
-//         }
-//         stage("Deploy events-app") {
-//             steps {
-//                 dir("helm/events-app") {
-//                     script {
-//                         sh '${BIN_PATH}/helm dependency update'
-//                         if (env.EVENTS_APP_EXISTS == 'false') {
-//                             sh '''
-//                             ${BIN_PATH}/helm install events-app . \
-//                             --set website.image.tag=$FRONTEND_IMAGE_TAG \
-//                             --set backend.image.tag=$BACKEND_IMAGE_TAG \
-//                             --set eventsJob.image.tag='1.0'
-//                             '''
-//                         } else {
-//                             def mariadb_root_password= sh(script: '$(kubectl get secret --namespace "default" events-app-mariadb -o jsonpath="{.data.mariadb-root-password}" | base64 -d)')
-//                             env.MARIADB_ROOT_PASS = mariadb_root_password
-//                             sh '''
-//                             ${BIN_PATH}/helm upgrade events-app . \
-//                             --set website.image.tag=$FRONTEND_IMAGE_TAG \
-//                             --set backend.image.tag=$BACKEND_IMAGE_TAG \
-//                             --set eventsJob.image.tag='1.0'
-//                             --set mariadb.auth.rootPassword=$MARIADB_ROOT_PASS
-//                             '''
-//                         }
-//                     }
-//                 }
-//             }
-//         }
+        }
+        stage("Deploy events-app") {
+            steps {
+                dir("helm/events-app") {
+                    script {
+                        sh '${BIN_PATH}/helm dependency update'
+                        if (env.EVENTS_APP_EXISTS == 'false') {
+                            sh '''
+                            ${BIN_PATH}/helm install events-app . \
+                            --set website.image.tag=$FRONTEND_IMAGE_TAG \
+                            --set backend.image.tag=$BACKEND_IMAGE_TAG \
+                            --set eventsJob.image.tag=$DB_INIT_VERSION_TAG
+                            '''
+                        } else {
+                            def mariadb_root_password= sh(script: '$(kubectl get secret --namespace "default" events-app-mariadb -o jsonpath="{.data.mariadb-root-password}" | base64 -d)')
+                            env.MARIADB_ROOT_PASS = mariadb_root_password
+                            sh '''
+                            ${BIN_PATH}/helm upgrade events-app . \
+                            --set website.image.tag=$FRONTEND_IMAGE_TAG \
+                            --set backend.image.tag=$BACKEND_IMAGE_TAG \
+                            --set eventsJob.image.tag=$DB_INIT_VERSION_TAG
+                            --set mariadb.auth.rootPassword=$MARIADB_ROOT_PASS
+                            '''
+                        }
+                    }
+                }
+            }
+        }
 
 //         stage('Deploy backend to EKS') {
 //             steps {
