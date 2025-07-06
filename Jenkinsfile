@@ -240,22 +240,22 @@ pipeline {
                     script {
                         sh '${BIN_PATH}/helm dependency update'
                         if (env.EVENTS_APP_EXISTS == 'false') {
-                            sh '''
+                            sh """
                             ${BIN_PATH}/helm install events-app . \
-                            --set website.image.tag=$FRONTEND_IMAGE_TAG \
-                            --set backend.image.tag=$BACKEND_IMAGE_TAG \
-                            --set eventsJob.image.tag=$DB_INIT_VERSION_TAG
-                            '''
+                            --set website.image.tag=${params.FRONTEND_IMAGE_TAG} \
+                            --set backend.image.tag=${params.BACKEND_IMAGE_TAG} \
+                            --set eventsJob.image.tag=${params.DB_INIT_VERSION_TAG}
+                            """
                         } else {
-                            def mariadb_root_password= sh(script: '$(kubectl get secret --namespace "default" events-app-mariadb -o jsonpath="{.data.mariadb-root-password}" | base64 -d)')
+                            def mariadb_root_password = sh(script: '$(kubectl get secret --namespace "default" events-app-mariadb -o jsonpath="{.data.mariadb-root-password}" | base64 -d)')
                             env.MARIADB_ROOT_PASS = mariadb_root_password
-                            sh '''
+                            sh """
                             ${BIN_PATH}/helm upgrade events-app . \
-                            --set website.image.tag=$FRONTEND_IMAGE_TAG \
-                            --set backend.image.tag=$BACKEND_IMAGE_TAG \
-                            --set eventsJob.image.tag=$DB_INIT_VERSION_TAG
+                            --set website.image.tag=${params.FRONTEND_IMAGE_TAG} \
+                            --set backend.image.tag=${params.BACKEND_IMAGE_TAG} \
+                            --set eventsJob.image.tag=${params.DB_INIT_VERSION_TAG} \
                             --set mariadb.auth.rootPassword=$MARIADB_ROOT_PASS
-                            '''
+                            """
                         }
                     }
                 }
