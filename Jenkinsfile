@@ -14,7 +14,7 @@ pipeline {
         string(name: 'BACKEND_IMAGE_REPO', defaultValue: 'wburgis/devops-er-backend', description: 'The repo to push the events-app backend image to')
         string(name: 'DB_INIT_IMAGE_REPO', defaultValue: '360990851379.dkr.ecr.us-east-1.amazonaws.com/events-job', description: 'The repo to pull the events-app db-init job from')
         choice(name: 'IMAGE_REPO_TYPE', choices: ['dockerhub', 'ecr'], description: 'The type of image repository to use (dockerhub[default] or ecr)')
-        booleanParam(name: 'SHOULD_BUILD_IMAGES', defaultValue: 'true', description: 'Whether this pipeline should build new images before deploying')
+        booleanParam(name: 'SHOULD_BUILD_IMAGES', defaultValue: true, description: 'Whether this pipeline should build new images before deploying')
         // in a real-world pipeline, the code for these images would live in separate repos and be versioned independently
         string(name: 'FRONTEND_VERSION_TAG', defaultValue: '1.0', description: 'The version tag to use to build and pull the frontend docker image')
         string(name: 'BACKEND_VERSION_TAG', defaultValue: '1.0', description: 'The version tag to use to build and pull the backend docker image')
@@ -152,7 +152,7 @@ pipeline {
 
         stage('Build backend Docker image') {
             when {
-                expression { params.SHOULD_BUILD_IMAGES == 'true' }
+                expression { params.SHOULD_BUILD_IMAGES }
             }
             steps {
                 script {
@@ -166,7 +166,7 @@ pipeline {
         
         stage('Push backend Docker image to dockerhub') {
             when {
-                expression { params.SHOULD_BUILD_IMAGES == 'true' && params.IMAGE_REPO_TYPE == 'dockerhub'}
+                expression { params.SHOULD_BUILD_IMAGES && params.IMAGE_REPO_TYPE == 'dockerhub'}
             }
             steps {
                 withCredentials([usernamePassword(credentialsId: '5cd81998-a923-4dc4-8b0c-a3d5239f9661', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
@@ -180,7 +180,7 @@ pipeline {
 
         stage('Push backend Docker image to ecr') {
             when {
-                expression { params.SHOULD_BUILD_IMAGES == 'true' && params.IMAGE_REPO_TYPE == 'ecr'}
+                expression { params.SHOULD_BUILD_IMAGES && params.IMAGE_REPO_TYPE == 'ecr'}
             }
             steps {
                 sh 'echo "Pushing backend Docker image to ECR"'
