@@ -9,11 +9,11 @@ pipeline {
 
     parameters {
         string(name: 'AWS_REGION', defaultValue: 'us-east-1', description: 'AWS Region for all resources')
-        string(name: 'AWS_CREDENTIALS_ID', defaultValue: 'aws-credentials', description: 'The ID of a Credentials resource for AWS (expecting kind AWS Credentials)')
-        string(name: 'FRONTEND_IMAGE_REPO', defaultValue: 'wburgis/devops-er-frontend', description: 'The repo to push the events-app frontend image to')
-        string(name: 'BACKEND_IMAGE_REPO', defaultValue: 'wburgis/devops-er-backend', description: 'The repo to push the events-app backend image to')
-        string(name: 'DB_INIT_IMAGE_REPO', defaultValue: '360990851379.dkr.ecr.us-east-1.amazonaws.com/events-job', description: 'The repo to pull the events-app db-init job from')
-        choice(name: 'IMAGE_REPO_TYPE', choices: ['dockerhub', 'ecr'], description: 'The type of image repository to use (dockerhub[default] or ecr)')
+        string(name: 'AWS_CREDENTIALS_ID', defaultValue: 'aws-creds', description: 'The ID of a Credentials resource for AWS (expecting kind AWS Credentials)')
+        string(name: 'FRONTEND_IMAGE_REPO', defaultValue: '360871920119.dkr.ecr.us-east-1.amazonaws.com/events-website', description: 'The repo to push the events-app frontend image to')
+        string(name: 'BACKEND_IMAGE_REPO', defaultValue: '360871920119.dkr.ecr.us-east-1.amazonaws.com/events-api', description: 'The repo to push the events-app backend image to')
+        string(name: 'DB_INIT_IMAGE_REPO', defaultValue: '360871920119.dkr.ecr.us-east-1.amazonaws.com/events-job', description: 'The repo to pull the events-app db-init job from')
+        choice(name: 'IMAGE_REPO_TYPE', choices: ['ecr', 'dockerhub'], description: 'The type of image repository to use (dockerhub[default] or ecr)')
         string(name: 'DOCKERHUB_CREDENTIALS_ID', defaultValue: '5cd81998-a923-4dc4-8b0c-a3d5239f9661', description: 'The credentials to authenticate with DockerHub (if using dockerhub as the image repo type)')
         booleanParam(name: 'SHOULD_BUILD_IMAGES', defaultValue: true, description: 'Whether this pipeline should build new images before deploying')
         // in a real-world pipeline, the code for these images would live in separate repos and be versioned independently
