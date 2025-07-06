@@ -92,65 +92,6 @@ pipeline {
             }
         }
         
-//         stage('Check for backend changes') {
-//             steps {
-//                 script {
-//                     echo 'Checking for changes in backend directory'
-//                     def changes = sh(script: "git diff --name-only HEAD~1 HEAD | grep '^backend/' || true", returnStdout: true).trim()
-//                     if (changes) {
-//                         echo "Changes detected:\n${changes}"
-//                         env.BUILD_BACKEND_IMAGE = 'true'
-//                     } else {
-//                         echo "No changes in backend directory."
-//                         env.BUILD_BACKEND_IMAGE = 'false'
-//                     }
-//                 }
-//             }
-//         }
-        
-        
-//         stage('Determine new backend image tag') {
-//             steps {
-//                 script {
-//                     def tagsJson = sh(
-//                         script: "curl -s https://hub.docker.com/v2/repositories/${BACKEND_IMAGE_REPO}/tags?page_size=100",
-//                         returnStdout: true
-//                     ).trim()
-        
-//                     def tags = readJSON text: tagsJson
-//                     def versionTags = tags.results.collect { it.name }
-                    
-//                     echo "Version tags: ${versionTags}"
-
-//                     def newTag = '1.0'
-//                     if (versionTags) {
-//                         def maxMajor = 0
-//                         def maxMinor = 0
-
-//                         for (tag in versionTags) {
-//                             def parts = tag.tokenize('.')
-//                             def major = parts[0].toInteger()
-//                             def minor = parts[1].toInteger()
-
-//                             if (major > maxMajor || (major == maxMajor && minor > maxMinor)) {
-//                                 maxMajor = major
-//                                 maxMinor = minor
-//                             }
-//                         }
-
-//                         if (env.BUILD_BACKEND_IMAGE == 'true') {
-//                             newTag = "${maxMajor}.${maxMinor + 1}"
-//                         } else {
-//                             newTag = "${maxMajor}.${maxMinor}"
-//                         }
-//                     }
-
-//                     env.BACKEND_IMAGE_TAG = newTag
-//                     echo "New Docker image tag: ${env.BACKEND_IMAGE_TAG}"
-//                 }
-//             }
-//         }
-
         stage('Build backend Docker image') {
             when {
                 expression { params.SHOULD_BUILD_IMAGES }
@@ -188,95 +129,71 @@ pipeline {
                 sh "docker push ${params.BACKEND_IMAGE_REPO}:${params.BACKEND_VERSION_TAG}"
             }
         }
+                
+        stage('Build frontend Docker image') {
+            when {
+                expression { params.SHOULD_BUILD_IMAGES }
+            }
+            steps {
+                script {
+                    echo 'Building frontend Docker image'
+                    dir('frontend') {
+                        sh "docker build -t ${params.FRONTEND_IMAGE_REPO}:${params.FRONTEND_VERSION_TAG} ."
+                    }
+                }
+            }
+        }
         
-//         stage('Check for frontend changes') {
-//             steps {
-//                 script {
-//                     echo 'Checking for changes in frontend directory'
-//                     def changes = sh(script: "git diff --name-only HEAD~1 HEAD | grep '^frontend/' || true", returnStdout: true).trim()
-//                     if (changes) {
-//                         echo "Changes detected:\n${changes}"
-//                         env.BUILD_FRONTEND_IMAGE = 'true'
-//                     } else {
-//                         echo "No changes in frontend directory."
-//                         env.BUILD_FRONTEND_IMAGE = 'false'
-//                     }
-//                 }
-//             }
-//         }
+        stage('Push frontend Docker image to dockerhub') {
+            when {
+                expression { params.SHOULD_BUILD_IMAGES && params.IMAGE_REPO_TYPE == 'dockerhub'}
+            }
+            steps {
+                withCredentials([usernamePassword(credentialsId: params.DOCKERHUB_CREDENTIALS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh """
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push ${params.FRONTEND_IMAGE_REPO}:${params.FRONTEND_VERSION_TAG}
+                    """
+                }
+            }
+        }
+
+        stage('Push frontend Docker image to ecr') {
+            when {
+                expression { params.SHOULD_BUILD_IMAGES && params.IMAGE_REPO_TYPE == 'ecr'}
+            }
+            steps {
+                sh "aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${params.FRONTEND_IMAGE_REPO}"
+                sh "docker push ${params.FRONTEND_IMAGE_REPO}:${params.FRONTEND_VERSION_TAG}"
+            }
+        }
+
+        stage('Build db-init Docker image') {
+            when {
+                expression { params.SHOULD_BUILD_IMAGES }
+            }
+            steps {
+                script {
+                    echo 'Building db-init Docker image'
+                    dir('database-initializer') {
+                        sh "docker build -t ${params.DB_INIT_IMAGE_REPO}:${params.DB_INIT_VERSION_TAG} ."
+                    }
+                }
+            }
+        }
         
-        
-//         stage('Determine new frontend image tag') {
-//             steps {
-//                 script {
-//                     def frontendImage = 'wburgis/devops-er-frontend'
-//                     def tagsJson = sh(
-//                         script: "curl -s https://hub.docker.com/v2/repositories/${frontendImage}/tags?page_size=100",
-//                         returnStdout: true
-//                     ).trim()
-        
-//                     def tags = readJSON text: tagsJson
-//                     def versionTags = tags.results.collect { it.name }
-                    
-//                     echo "Version tags: ${versionTags}"
+        //dockerhub push ommitted because wburgis does not have a repo for db-init
 
-//                     def newTag = '1.0'
-//                     if (versionTags) {
-//                         def maxMajor = 0
-//                         def maxMinor = 0
+        stage('Push db-init Docker image to ecr') {
+            when {
+                expression { params.SHOULD_BUILD_IMAGES && params.IMAGE_REPO_TYPE == 'ecr'}
+            }
+            steps {
+                sh "aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin ${params.DB_INIT_IMAGE_REPO}"
+                sh "docker push ${params.DB_INIT_IMAGE_REPO}:${params.DB_INIT_VERSION_TAG}"
+            }
+        }
 
-//                         for (tag in versionTags) {
-//                             def parts = tag.tokenize('.')
-//                             def major = parts[0].toInteger()
-//                             def minor = parts[1].toInteger()
-
-//                             if (major > maxMajor || (major == maxMajor && minor > maxMinor)) {
-//                                 maxMajor = major
-//                                 maxMinor = minor
-//                             }
-//                         }
-
-//                         if (env.BUILD_FRONTEND_IMAGE == 'true') {
-//                             newTag = "${maxMajor}.${maxMinor + 1}"
-//                         } else {
-//                             newTag = "${maxMajor}.${maxMinor}"
-//                         }
-//                     }
-
-//                     env.FRONTEND_IMAGE_TAG = newTag
-//                     echo "New Docker image tag: ${env.FRONTEND_IMAGE_TAG}"
-//                 }
-//             }
-//         }
-
-//         stage('Build frontend Docker image') {
-//             when {
-//                 expression { env.BUILD_FRONTEND_IMAGE == 'true' }
-//             }
-//             steps {
-//                 script {
-//                     echo 'Building frontend Docker image'
-//                     dir('frontend') {
-//                         def frontendImageName = 'wburgis/devops-er-frontend'
-//                         sh "docker build -t ${frontendImageName}:${env.FRONTEND_IMAGE_TAG} ."
-//                     }
-//                 }
-//             }
-//         }
-        
-//         stage('Push frontend Docker image') {
-//             when {
-//                 expression { env.BUILD_FRONTEND_IMAGE == 'true' }
-//             }
-//             steps {
-//                 withCredentials([usernamePassword(credentialsId: '5cd81998-a923-4dc4-8b0c-a3d5239f9661', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-//                     sh '''
-//                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-//                         docker push wburgis/devops-er-frontend:${FRONTEND_IMAGE_TAG}
-//                     '''
-//                 }
-//             }
-//         }
 
 //         stage('Create EKS Cluster') {
 //             when {
