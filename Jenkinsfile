@@ -225,10 +225,10 @@ pipeline {
                     try {
                         sh '${BIN_PATH}/helm status events-app'
                         echo "events-app already installed"
-                        env.EVENTS_APP_EXISTS = true
+                        env.EVENTS_APP_EXISTS = 'true'
                     } catch (Exception e) {
                         echo "events-app not yet installed"
-                        env.EVENTS_APP_EXISTS = false
+                        env.EVENTS_APP_EXISTS = 'false'
                     }
                 }
             }
@@ -239,7 +239,7 @@ pipeline {
                 dir("helm/events-app") {
                     script {
                         sh '${BIN_PATH}/helm dependency update'
-                        if (!env.EVENTS_APP_EXISTS) {
+                        if (env.EVENTS_APP_EXISTS == 'false') {
                             sh '''
                             ${BIN_PATH}/helm install events-app . \
                             --set website.image.tag=$FRONTEND_IMAGE_TAG \
