@@ -2,8 +2,6 @@
  * Jenkinsfile for building and deploying the events-app project.  
  * This pipeline builds Docker images for the frontend and backend, pushes them to a specified repository,
  * and deploys the application to an EKS cluster using Helm.
- * This pipeline is triggered on tag creation, and 
- * will tag the built images with the tag of the commit that triggered the build.
  */
 
 pipeline {
@@ -16,7 +14,11 @@ pipeline {
         string(name: 'BACKEND_IMAGE_REPO', defaultValue: 'wburgis/devops-er-backend', description: 'The repo to push the events-app backend image to')
         string(name: 'DB_INIT_IMAGE_REPO', defaultValue: '360990851379.dkr.ecr.us-east-1.amazonaws.com/events-job', description: 'The repo to pull the events-app db-init job from')
         choice(name: 'IMAGE_REPO_TYPE', choices: ['dockerhub', 'ecr'], description: 'The type of image repository to use (dockerhub[default] or ecr)')
-        string(name: 'VERSION_TAG', defaultValue: '1.0', description: 'The version tag to use for the Docker images (pulled from the triggering commit when available)')
+        booleanParam(name: 'SHOULD_BUILD_IMAGES', defaultValue: 'true', description: 'Whether this pipeline should build new images before deploying')
+        // in a real-world pipeline, the code for these images would live in separate repos and be versioned independently
+        string(name: 'FRONTEND_VERSION_TAG', defaultValue: '1.0', description: 'The version tag to use to build and pull the frontend docker image')
+        string(name: 'BACKEND_VERSION_TAG', defaultValue: '1.0', description: 'The version tag to use to build and pull the backend docker image')
+        string(name: 'DB_INIT_VERSION_TAG', defaultValue: '1.0', description: 'The version tag to use to build and pull the db_init docker image')
     }
 
     environment {
@@ -24,15 +26,9 @@ pipeline {
         BIN_PATH = '/var/lib/jenkins/.local/bin'
         AWS_REGION = "${params.AWS_REGION}"
         AWS_CREDENTIALS_ID = "${params.AWS_CREDENTIALS_ID}"
-        TAG_NAME = "${env.TAG_NAME ? env.TAG_NAME : params.VERSION_TAG}"
     }
 
     stages {
-        stage("Test") {
-            steps {
-                sh 'echo $TAG_NAME'
-            }
-        }
         stage('Configure AWS Credentials') {
             steps {
                 withCredentials([aws(credentialsId: "$AWS_CREDENTIALS_ID", accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
@@ -76,7 +72,7 @@ pipeline {
             steps {
                 script {
                     echo "Installing helm"
-                    sh 'curl -sLO "https://get.helm.sh/helm-v3.18.3-linux-amd64.tar.gz"'
+                    sh 'curl -sLO "https://get.helm.shwburgis/devops-er-backend/helm-v3.18.3-linux-amd64.tar.gz"'
                     sh 'tar -xzf helm-v3.18.3-linux-amd64.tar.gz -C /tmp && rm helm-v3.18.3-linux-amd64.tar.gz'
                     sh 'mv /tmp/linux-amd64/helm ~/.local/bin/helm'                    
                     echo "Getting helm version"
@@ -154,34 +150,42 @@ pipeline {
 //             }
 //         }
 
-//         stage('Build backend Docker image') {
-//             when {
-//                 expression { env.BUILD_BACKEND_IMAGE == 'true' }
-//             }
-//             steps {
-//                 script {
-//                     echo 'Building backend Docker image'
-//                     dir('backend') {
-//                         def backendImageName = 'wburgis/devops-er-backend'
-//                         sh "docker build -t ${backendImageName}:${env.BACKEND_IMAGE_TAG} ."
-//                     }
-//                 }
-//             }
-//         }
+        stage('Build backend Docker image') {
+            when {
+                expression { params.SHOULD_BUILD_IMAGES == 'true' }
+            }
+            steps {
+                script {
+                    echo 'Building backend Docker image'
+                    dir('backend') {
+                        sh "docker build -t ${params.BACKEND_IMAGE_+REPO}:${params.BACKEND_VERSION_TAG} ."
+                    }
+                }
+            }
+        }
         
-//         stage('Push backend Docker image') {
-//             when {
-//                 expression { env.BUILD_BACKEND_IMAGE == 'true' }
-//             }
-//             steps {
-//                 withCredentials([usernamePassword(credentialsId: '5cd81998-a923-4dc4-8b0c-a3d5239f9661', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-//                     sh '''
-//                         echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-//                         docker push wburgis/devops-er-backend:${BACKEND_IMAGE_TAG}
-//                     '''
-//                 }
-//             }
-//         }
+        stage('Push backend Docker image to dockerhub') {
+            when {
+                expression { params.SHOULD_BUILD_IMAGES == 'true' && params.IMAGE_REPO_TYPE == 'dockerhub'}
+            }
+            steps {
+                withCredentials([usernamePassword(credentialsId: '5cd81998-a923-4dc4-8b0c-a3d5239f9661', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh """
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push ${params.BACKEND_IMAGE_REPO}:${params.BACKEND_VERSION_TAG}
+                    """
+                }
+            }
+        }
+
+        stage('Push backend Docker image to ecr') {
+            when {
+                expression { params.SHOULD_BUILD_IMAGES == 'true' && params.IMAGE_REPO_TYPE == 'ecr'}
+            }
+            steps {
+                sh 'echo "Pushing backend Docker image to ECR"'
+            }
+        }
         
 //         stage('Check for frontend changes') {
 //             steps {
