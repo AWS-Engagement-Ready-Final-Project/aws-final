@@ -168,7 +168,7 @@ pipeline {
                 script {
                     build job: 'trivy-scan-pipeline',
                         parameters: [
-                            string(name: 'IMAGE_NAME', value: "${params.FRONTEND_IMAGE_REPO}:${params.FRONTEND_VERSION_TAG}")
+                            string(name: 'IMAGE', value: "${params.FRONTEND_IMAGE_REPO}:${params.FRONTEND_VERSION_TAG}")
                         ],
                         wait: true
                 }
@@ -218,7 +218,7 @@ pipeline {
                 script {
                     build job: 'trivy-scan-pipeline',
                         parameters: [
-                            string(name: 'IMAGE_NAME', value: "${params.BACKEND_IMAGE_REPO}:${params.BACKEND_VERSION_TAG}")
+                            string(name: 'IMAGE', value: "${params.BACKEND_IMAGE_REPO}:${params.BACKEND_VERSION_TAG}")
                         ],
                         wait: true
                 }
