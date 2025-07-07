@@ -85,7 +85,7 @@ pipeline {
         stage('Clone the devops repo') {
             steps {
                 echo 'Cloning devops project repository'
-                git branch: 'main',
+                git branch: env.BRANCH_NAME ?: 'main',
                     url: 'https://github.com/AWS-Engagement-Ready-Final-Project/aws-final.git'
                 echo 'Was repo cloned?'
                 sh 'ls -a'
