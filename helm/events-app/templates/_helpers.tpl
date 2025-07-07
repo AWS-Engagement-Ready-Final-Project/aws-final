@@ -78,7 +78,7 @@ spec:
       protocol: TCP
   selector:
     app: {{ $appName }} 
-    ver: {{ .ver }} 
+    ver: "{{ .ver }}"
 {{- end }}
 
 {{/*
