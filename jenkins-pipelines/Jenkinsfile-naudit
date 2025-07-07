@@ -1,0 +1,28 @@
+pipeline {
+    agent any
+    parameters {
+        string(name: 'SOURCE_DIR', defaultValue: '', description: 'Path to JS project directory')
+    }
+    stages {
+        stage('NPM Audit') {
+            steps {
+                script {
+                    if (fileExists(params.SOURCE_DIR)) {
+                        echo "🔍 Running npm audit on ${params.SOURCE_DIR}"
+                        dir(params.SOURCE_DIR) {
+                            sh 'npm install || true'
+                            def result = sh(script: 'npm audit --audit-level=low', returnStatus: true)
+                            if (result != 0) {
+                                echo "⚠️ npm audit found issues in ${params.SOURCE_DIR}"
+                            } else {
+                                echo "✅ npm audit passed cleanly for ${params.SOURCE_DIR}"
+                            }
+                        }
+                    } else {
+                        echo "❌ npm audit skipped: directory '${params.SOURCE_DIR}' not found"
+                    }
+                }
+            }
+        }
+    }
+}

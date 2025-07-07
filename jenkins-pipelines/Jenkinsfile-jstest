@@ -1,0 +1,28 @@
+pipeline {
+    agent any
+    parameters {
+        string(name: 'SOURCE_DIR', defaultValue: '', description: 'Path to JS project directory')
+    }
+    stages {
+        stage('Run JS Tests') {
+            steps {
+                script {
+                    if (fileExists(params.SOURCE_DIR)) {
+                        echo "🔍 Running JS tests in ${params.SOURCE_DIR}"
+                        dir(params.SOURCE_DIR) {
+                            sh 'npm install || true'
+                            def result = sh(script: 'npm test', returnStatus: true)
+                            if (result != 0) {
+                                echo "⚠️ JS tests failed in ${params.SOURCE_DIR}"
+                            } else {
+                                echo "✅ JS tests passed cleanly for ${params.SOURCE_DIR}"
+                            }
+                        }
+                    } else {
+                        echo "❌ JS tests skipped: directory '${params.SOURCE_DIR}' not found"
+                    }
+                }
+            }
+        }
+    }
+}

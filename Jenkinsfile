@@ -1,5 +1,5 @@
 /*
- * Jenkinsfile for building and deploying the events-app project.  
+ * Jenkinsfile for building and deploying the events-app project.
  * This pipeline builds Docker images for the frontend and backend, pushes them to a specified repository,
  * and deploys the application to an EKS cluster using Helm.
  */
@@ -23,7 +23,7 @@ pipeline {
     }
 
     environment {
-        PLATFORM = 'linux_amd64'        
+        PLATFORM = 'linux_amd64'
         BIN_PATH = '/var/lib/jenkins/.local/bin'
         AWS_REGION = "${params.AWS_REGION}"
         AWS_CREDENTIALS_ID = "${params.AWS_CREDENTIALS_ID}"
@@ -45,14 +45,14 @@ pipeline {
         }
 
         stage('Install kubectl') {
-            steps {            
+            steps {
                 echo "Installing kubectl"
                 sh 'curl -O "https://s3.us-west-2.amazonaws.com/amazon-eks/1.33.0/2025-05-01/bin/linux/amd64/kubectl"'
-                sh 'chmod +x ./kubectl'                                   
-                sh 'mkdir -p ~/.local/bin'                
-                sh 'mv ./kubectl ~/.local/bin/kubectl'                                     
-                echo "Getting kubectl version"                
-                sh '${BIN_PATH}/kubectl version --client=true'                       
+                sh 'chmod +x ./kubectl'
+                sh 'mkdir -p ~/.local/bin'
+                sh 'mv ./kubectl ~/.local/bin/kubectl'
+                echo "Getting kubectl version"
+                sh '${BIN_PATH}/kubectl version --client=true'
             }
         }
 
@@ -62,10 +62,10 @@ pipeline {
                     echo "Installing eksctl"
                     sh 'curl -sLO "https://github.com/eksctl-io/eksctl/releases/latest/download/eksctl_${PLATFORM}.tar.gz"'
                     sh 'tar -xzf eksctl_$PLATFORM.tar.gz -C /tmp && rm eksctl_$PLATFORM.tar.gz'
-                    sh 'mv /tmp/eksctl ~/.local/bin/eksctl'                    
+                    sh 'mv /tmp/eksctl ~/.local/bin/eksctl'
                     echo "Getting eksctl version"
                     sh '${BIN_PATH}/eksctl version'
-                }                
+                }
             }
         }
 
@@ -75,7 +75,7 @@ pipeline {
                     echo "Installing helm"
                     sh 'curl -sLO "https://get.helm.sh/helm-v3.18.3-linux-amd64.tar.gz"'
                     sh 'tar -xzf helm-v3.18.3-linux-amd64.tar.gz -C /tmp && rm helm-v3.18.3-linux-amd64.tar.gz'
-                    sh 'mv /tmp/linux-amd64/helm ~/.local/bin/helm'                    
+                    sh 'mv /tmp/linux-amd64/helm ~/.local/bin/helm'
                     echo "Getting helm version"
                     sh '${BIN_PATH}/helm version'
                 }
@@ -91,7 +91,26 @@ pipeline {
                 sh 'ls -a'
             }
         }
-        
+
+        stage('Pre-check: Code Quality & Security') {
+            steps {
+                script {
+                    def checks = [
+                        [job: 'hadolint-scan-pipeline',  params: [string(name: 'DOCKERFILE_PATH', value: 'frontend/Dockerfile')]],
+                        [job: 'hadolint-scan-pipeline',  params: [string(name: 'DOCKERFILE_PATH', value: 'backend/Dockerfile')]],
+                        [job: 'yamllint-scan-pipeline',  params: [string(name: 'YAML_DIR', value: 'helm/events-app')]],
+                        [job: 'checkov-scan-pipeline',   params: [string(name: 'IAC_DIR', value: 'helm/events-app')]],
+                        [job: 'jslint-scan-pipeline',    params: [string(name: 'SOURCE_DIR', value: 'frontend')]],
+                        [job: 'npm-audit-scan-pipeline', params: [string(name: 'SOURCE_DIR', value: 'frontend')]],
+                        [job: 'js-test-pipeline',        params: [string(name: 'SOURCE_DIR', value: 'frontend')]]
+                    ]
+                    for (check in checks) {
+                        build job: check.job, parameters: check.params, wait: true
+                    }
+                }
+            }
+        }
+
         stage('Build backend Docker image') {
             when {
                 expression { params.SHOULD_BUILD_IMAGES }
@@ -105,7 +124,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Push backend Docker image to dockerhub') {
             when {
                 expression { params.SHOULD_BUILD_IMAGES && params.IMAGE_REPO_TYPE == 'dockerhub'}
@@ -129,7 +148,7 @@ pipeline {
                 sh "docker push ${params.BACKEND_IMAGE_REPO}:${params.BACKEND_VERSION_TAG}"
             }
         }
-                
+
         stage('Build frontend Docker image') {
             when {
                 expression { params.SHOULD_BUILD_IMAGES }
@@ -143,7 +162,19 @@ pipeline {
                 }
             }
         }
-        
+
+         stage('Scan frontend Docker image with Trivy') {
+            steps {
+                script {
+                    build job: 'trivy-scan-pipeline',
+                        parameters: [
+                            string(name: 'IMAGE_NAME', value: "${params.FRONTEND_IMAGE_REPO}:${params.FRONTEND_VERSION_TAG}")
+                        ],
+                        wait: true
+                }
+            }
+        }
+
         stage('Push frontend Docker image to dockerhub') {
             when {
                 expression { params.SHOULD_BUILD_IMAGES && params.IMAGE_REPO_TYPE == 'dockerhub'}
@@ -181,7 +212,19 @@ pipeline {
                 }
             }
         }
-        
+
+        stage('Scan backend Docker image with Trivy') {
+            steps {
+                script {
+                    build job: 'trivy-scan-pipeline',
+                        parameters: [
+                            string(name: 'IMAGE_NAME', value: "${params.BACKEND_IMAGE_REPO}:${params.BACKEND_VERSION_TAG}")
+                        ],
+                        wait: true
+                }
+            }
+        }
+
         //dockerhub push ommitted because wburgis does not have a repo for db-init
 
         stage('Push db-init Docker image to ecr') {
@@ -215,7 +258,7 @@ pipeline {
             }
             steps {
                 echo "Creating EKS Cluster"
-                sh '${BIN_PATH}/eksctl create cluster -f eks/cluster.yaml'       
+                sh '${BIN_PATH}/eksctl create cluster -f eks/cluster.yaml'
             }
         }
 
@@ -289,4 +332,3 @@ pipeline {
         }
     }
 }
-

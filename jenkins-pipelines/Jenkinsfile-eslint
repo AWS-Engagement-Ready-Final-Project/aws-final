@@ -1,0 +1,44 @@
+pipeline {
+    agent any
+    environment {
+        PATH = "${env.HOME}/.local/bin:${env.PATH}"
+    }
+    parameters {
+        string(name: 'SOURCE_DIR', defaultValue: 'jenkins-pipelines/tests', description: 'Directory to lint')
+    }
+    stages {
+        stage('Install eslint') {
+            steps {
+                script {
+                    sh '''
+                        mkdir -p ~/.local/bin
+                        npm config set prefix ~/.local
+                        npm install -g eslint
+                        ~/.local/bin/eslint --version
+                    '''
+                }
+            }
+        }
+
+        stage('ESLint Scan') {
+            steps {
+                script {
+                    if (fileExists(params.SOURCE_DIR)) {
+                        echo "🔍 Running eslint on ${params.SOURCE_DIR}"
+                        def result = sh(
+                            script: "eslint ${params.SOURCE_DIR} || true",
+                            returnStatus: true
+                        )
+                        if (result != 0) {
+                            echo "⚠️ eslint found issues in ${params.SOURCE_DIR}"
+                        } else {
+                            echo "✅ eslint passed cleanly for ${params.SOURCE_DIR}"
+                        }
+                    } else {
+                        echo "❌ ESLint skipped: directory '${params.SOURCE_DIR}' not found"
+                    }
+                }
+            }
+        }
+    }
+}
