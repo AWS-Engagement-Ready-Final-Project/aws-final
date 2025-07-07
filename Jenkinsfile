@@ -215,7 +215,7 @@ pipeline {
             }
             steps {
                 echo "Creating EKS Cluster"
-                sh '${BIN_PATH}/eksctl create cluster -f kubernetes-config/cluster.yaml'       
+                sh '${BIN_PATH}/eksctl create cluster -f eks/cluster.yaml'       
             }
         }
 
@@ -224,7 +224,7 @@ pipeline {
                 script {
                     echo "Patching EKS storageclass"
                     sh '''
-                        kubectl patch storageclass gp2 -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+                        ${BIN_PATH}/kubectl patch storageclass gp2 -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
                     '''
                 }
             }
@@ -267,7 +267,7 @@ pipeline {
                                 error "Failed to deploy events-app, rolling back"
                             }
                         } else {
-                            def mariadb_root_password = sh(script: '$(kubectl get secret --namespace "default" events-app-mariadb -o jsonpath="{.data.mariadb-root-password}" | base64 -d)')
+                            def mariadb_root_password = sh(script: '$(${BIN_PATH}/kubectl get secret --namespace "default" events-app-mariadb -o jsonpath="{.data.mariadb-root-password}" | base64 -d)')
                             env.MARIADB_ROOT_PASS = mariadb_root_password
                             sh """
                             ${BIN_PATH}/helm upgrade events-app . -f values.yaml \
@@ -280,6 +280,10 @@ pipeline {
                             --set mariadb.auth.rootPassword="$MARIADB_ROOT_PASS"
                             """
                         }
+                        sh '''
+                        export SERVICE_IP=$(kubectl get svc --namespace default events-app-website-svc --template "{{ range (index .status.loadBalancer.ingress 0) }}{{.}}{{ end }}")
+                        echo http://$SERVICE_IP:80
+                        '''
                     }
                 }
             }
