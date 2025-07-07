@@ -254,23 +254,24 @@ pipeline {
                             try {
                                 sh """
                                 ${BIN_PATH}/helm install events-app . \
-                                --set website.image.tag=${params.FRONTEND_VERSION_TAG} \
-                                --set backend.image.tag=${params.BACKEND_VERSION_TAG} \
-                                --set eventsJob.image.tag=${params.DB_INIT_VERSION_TAG}
+                                --set website.image.tag='${params.FRONTEND_VERSION_TAG}' \
+                                --set backend.image.tag='${params.BACKEND_VERSION_TAG}' \
+                                --set eventsJob.image.tag='${params.DB_INIT_VERSION_TAG}'
                                 """
                             } catch (Exception e) {
                                 echo "Failed to install events-app: ${e.getMessage()}"
                                 sh '${BIN_PATH}/helm uninstall events-app'
+                                error "Failed to deploy events-app, rolling back"
                             }
                         } else {
                             def mariadb_root_password = sh(script: '$(kubectl get secret --namespace "default" events-app-mariadb -o jsonpath="{.data.mariadb-root-password}" | base64 -d)')
                             env.MARIADB_ROOT_PASS = mariadb_root_password
                             sh """
                             ${BIN_PATH}/helm upgrade events-app . \
-                            --set website.image.tag=${params.FRONTEND_VERSION_TAG} \
-                            --set backend.image.tag=${params.BACKEND_VERSION_TAG} \
-                            --set eventsJob.image.tag=${params.DB_INIT_VERSION_TAG} \
-                            --set mariadb.auth.rootPassword=$MARIADB_ROOT_PASS
+                            --set website.image.tag='${params.FRONTEND_VERSION_TAG}' \
+                            --set backend.image.tag='${params.BACKEND_VERSION_TAG}' \
+                            --set eventsJob.image.tag='${params.DB_INIT_VERSION_TAG}' \
+                            --set mariadb.auth.rootPassword='$MARIADB_ROOT_PASS'
                             """
                         }
                     }
