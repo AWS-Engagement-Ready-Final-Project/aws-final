@@ -98,12 +98,12 @@ spec:
   selector:
     matchLabels:
       app: {{ $appName }}
-      ver: {{ .image.tag }}
+      ver: "{{ .image.tag }}"
   template:
     metadata:
       labels:
         app: {{ $appName }}
-        ver: {{ .image.tag }}
+        ver: "{{ .image.tag }}"
     spec:
       containers:
         - name: {{ $appName }}
