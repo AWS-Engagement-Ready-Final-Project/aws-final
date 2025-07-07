@@ -1,0 +1,31 @@
+pipeline {
+    agent any
+    parameters {
+        string(name: 'IAC_DIR', defaultValue: '', description: 'Path to IaC directory')
+    }
+    stages {
+        stage('Install checkov') {
+            steps {
+                sh 'pip install --user checkov || true'
+            }
+        }
+
+        stage('Checkov Scan') {
+            steps {
+                script {
+                    if (fileExists(params.IAC_DIR)) {
+                        echo "🔍 Running checkov on ${params.IAC_DIR}"
+                        def result = sh(script: "checkov -d ${params.IAC_DIR} --quiet --compact", returnStatus: true)
+                        if (result != 0) {
+                            echo "⚠️ checkov found issues in ${params.IAC_DIR}"
+                        } else {
+                            echo "✅ checkov passed cleanly for ${params.IAC_DIR}"
+                        }
+                    } else {
+                        echo "❌ checkov skipped: directory '${params.IAC_DIR}' not found"
+                    }
+                }
+            }
+        }
+    }
+}

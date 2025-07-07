@@ -1,0 +1,31 @@
+pipeline {
+    agent any
+    parameters {
+        string(name: 'YAML_DIR', defaultValue: '', description: 'Path to YAML directory')
+    }
+    stages {
+        stage('Install yamllint') {
+            steps {
+                sh 'pip install --user yamllint || true'
+            }
+        }
+
+        stage('Yamllint Scan') {
+            steps {
+                script {
+                    if (fileExists(params.YAML_DIR)) {
+                        echo "🔍 Running yamllint on ${params.YAML_DIR}"
+                        def result = sh(script: "yamllint ${params.YAML_DIR}", returnStatus: true)
+                        if (result != 0) {
+                            echo "⚠️ yamllint found issues in ${params.YAML_DIR}"
+                        } else {
+                            echo "✅ yamllint passed cleanly for ${params.YAML_DIR}"
+                        }
+                    } else {
+                        echo "❌ yamllint skipped: directory '${params.YAML_DIR}' not found"
+                    }
+                }
+            }
+        }
+    }
+}

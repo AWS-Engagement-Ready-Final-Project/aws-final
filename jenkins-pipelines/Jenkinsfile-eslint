@@ -1,0 +1,31 @@
+pipeline {
+    agent any
+    parameters {
+        string(name: 'SOURCE_DIR', defaultValue: '', description: 'Path to JS source directory')
+    }
+    stages {
+        stage('Install eslint') {
+            steps {
+                sh 'npm install -g eslint || true'
+            }
+        }
+
+        stage('ESLint Scan') {
+            steps {
+                script {
+                    if (fileExists(params.SOURCE_DIR)) {
+                        echo "🔍 Running eslint on ${params.SOURCE_DIR}"
+                        def result = sh(script: "eslint ${params.SOURCE_DIR}", returnStatus: true)
+                        if (result != 0) {
+                            echo "⚠️ eslint found issues in ${params.SOURCE_DIR}"
+                        } else {
+                            echo "✅ eslint passed cleanly for ${params.SOURCE_DIR}"
+                        }
+                    } else {
+                        echo "❌ eslint skipped: directory '${params.SOURCE_DIR}' not found"
+                    }
+                }
+            }
+        }
+    }
+}

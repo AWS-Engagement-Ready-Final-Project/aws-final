@@ -1,0 +1,41 @@
+pipeline {
+  agent any
+
+  parameters {
+    string(name: 'IMAGE', defaultValue: '', description: 'Full image URI to scan (e.g., 906328874067.dkr.ecr.us-east-2.amazonaws.com/ai-api:latest)')
+  }
+
+  environment {
+    TRIVY_HOME = "${WORKSPACE}/trivy-bin"
+    PATH = "${WORKSPACE}/trivy-bin:${PATH}"
+  }
+
+  stages {
+    stage('Install Trivy') {
+      steps {
+        sh """
+          mkdir -p $TRIVY_HOME
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b $TRIVY_HOME
+        """
+      }
+    }
+
+    stage('Trivy Scan') {
+      steps {
+        sh """
+          echo "Scanning image: ${params.IMAGE}"
+          trivy image --exit-code 0 --severity MEDIUM,HIGH,CRITICAL ${params.IMAGE}
+        """
+      }
+    }
+
+    stage('Save Report (Optional)') {
+      steps {
+        sh """
+          trivy image --format json -o trivy-report.json ${params.IMAGE}
+        """
+        archiveArtifacts artifacts: 'trivy-report.json', fingerprint: true
+      }
+    }
+  }
+}

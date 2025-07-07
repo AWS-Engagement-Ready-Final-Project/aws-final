@@ -96,13 +96,14 @@ pipeline {
             steps {
                 script {
                     def checks = [
-                        [job: 'jadolint-scan-pipeline', params: [string(name: 'SOURCE_DIR', value: 'frontend')]],
-                        [job: 'jslint-scan-pipeline',   params: [string(name: 'SOURCE_DIR', value: 'frontend')]],
-                        [job: 'npm-audit-scan-pipeline',params: [string(name: 'SOURCE_DIR', value: 'frontend')]],
-                        [job: 'trivy-scan-pipeline',    params: [string(name: 'DOCKERFILE_PATH', value: 'frontend/Dockerfile')]],
-                        [job: 'js-test-pipeline',       params: [string(name: 'SOURCE_DIR', value: 'frontend')]]
+                        [job: 'hadolint-scan-pipeline',  params: [string(name: 'DOCKERFILE_PATH', value: 'frontend/Dockerfile')]],
+                        [job: 'hadolint-scan-pipeline',  params: [string(name: 'DOCKERFILE_PATH', value: 'backend/Dockerfile')]],
+                        [job: 'yamllint-scan-pipeline',  params: [string(name: 'YAML_DIR', value: 'helm/events-app')]],
+                        [job: 'checkov-scan-pipeline',   params: [string(name: 'IAC_DIR', value: 'helm/events-app')]],
+                        [job: 'jslint-scan-pipeline',    params: [string(name: 'SOURCE_DIR', value: 'frontend')]],
+                        [job: 'npm-audit-scan-pipeline', params: [string(name: 'SOURCE_DIR', value: 'frontend')]],
+                        [job: 'js-test-pipeline',        params: [string(name: 'SOURCE_DIR', value: 'frontend')]]
                     ]
-
                     for (check in checks) {
                         build job: check.job, parameters: check.params, wait: true
                     }
@@ -162,6 +163,18 @@ pipeline {
             }
         }
 
+         stage('Scan frontend Docker image with Trivy') {
+            steps {
+                script {
+                    build job: 'trivy-scan-pipeline',
+                        parameters: [
+                            string(name: 'IMAGE_NAME', value: "${params.FRONTEND_IMAGE_REPO}:${params.FRONTEND_VERSION_TAG}")
+                        ],
+                        wait: true
+                }
+            }
+        }
+
         stage('Push frontend Docker image to dockerhub') {
             when {
                 expression { params.SHOULD_BUILD_IMAGES && params.IMAGE_REPO_TYPE == 'dockerhub'}
@@ -196,6 +209,18 @@ pipeline {
                     dir('database-initializer') {
                         sh "docker build -t ${params.DB_INIT_IMAGE_REPO}:${params.DB_INIT_VERSION_TAG} ."
                     }
+                }
+            }
+        }
+
+        stage('Scan backend Docker image with Trivy') {
+            steps {
+                script {
+                    build job: 'trivy-scan-pipeline',
+                        parameters: [
+                            string(name: 'IMAGE_NAME', value: "${params.BACKEND_IMAGE_REPO}:${params.BACKEND_VERSION_TAG}")
+                        ],
+                        wait: true
                 }
             }
         }

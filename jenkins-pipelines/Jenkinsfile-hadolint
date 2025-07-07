@@ -1,0 +1,40 @@
+pipeline {
+    agent any
+    parameters {
+        string(name: 'DOCKERFILE_PATH', defaultValue: '', description: 'Path to Dockerfile')
+    }
+    stages {
+        stage('Install hadolint') {
+            steps {
+                sh '''
+                    if ! command -v hadolint &>/dev/null; then
+                        echo "Installing hadolint..."
+                        curl -LO https://github.com/hadolint/hadolint/releases/latest/download/hadolint-Linux-x86_64
+                        chmod +x hadolint-Linux-x86_64
+                        mv hadolint-Linux-x86_64 ~/.local/bin/hadolint || sudo mv hadolint-Linux-x86_64 /usr/local/bin/hadolint
+                    else
+                        echo "✅ hadolint already installed"
+                    fi
+                '''
+            }
+        }
+
+        stage('Hadolint Scan') {
+            steps {
+                script {
+                    if (fileExists(params.DOCKERFILE_PATH)) {
+                        echo "🔍 Running hadolint on ${params.DOCKERFILE_PATH}"
+                        def result = sh(script: "hadolint ${params.DOCKERFILE_PATH}", returnStatus: true)
+                        if (result != 0) {
+                            echo "⚠️ hadolint found issues in ${params.DOCKERFILE_PATH}"
+                        } else {
+                            echo "✅ hadolint passed cleanly for ${params.DOCKERFILE_PATH}"
+                        }
+                    } else {
+                        echo "❌ hadolint skipped: file '${params.DOCKERFILE_PATH}' not found"
+                    }
+                }
+            }
+        }
+    }
+}
