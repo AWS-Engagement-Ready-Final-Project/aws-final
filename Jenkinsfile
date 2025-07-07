@@ -219,6 +219,17 @@ pipeline {
             }
         }
 
+        stage("Patch EKS storageclass") {
+            steps {
+                script {
+                    echo "Patching EKS storageclass"
+                    sh '''
+                        kubectl patch storageclass gp2 -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+                    '''
+                }
+            }
+        }
+
         stage("Check for helm installation") {
             steps {
                 script {
