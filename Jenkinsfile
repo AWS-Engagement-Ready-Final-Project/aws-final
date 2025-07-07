@@ -255,8 +255,11 @@ pipeline {
                                 sh """
                                 ${BIN_PATH}/helm install events-app . -f values.yaml \
                                 --set website.image.tag="${params.FRONTEND_VERSION_TAG}" \
+                                --set website.image.repository="${params.FRONTEND_IMAGE_REPO}" \
                                 --set api.image.tag="${params.BACKEND_VERSION_TAG}" \
-                                --set eventsJob.image.tag="${params.DB_INIT_VERSION_TAG}"
+                                --set api.image.repository="${params.BACKEND_IMAGE_REPO}" \
+                                --set eventsJob.image.tag="${params.DB_INIT_VERSION_TAG}" \
+                                --set eventsJob.image.repository="${params.DB_INIT_IMAGE_REPO}"
                                 """
                             } catch (Exception e) {
                                 echo "Failed to install events-app: ${e.getMessage()}"
@@ -269,8 +272,11 @@ pipeline {
                             sh """
                             ${BIN_PATH}/helm upgrade events-app . -f values.yaml \
                             --set website.image.tag="${params.FRONTEND_VERSION_TAG}" \
+                            --set website.image.repository="${params.FRONTEND_IMAGE_REPO}" \
                             --set api.image.tag="${params.BACKEND_VERSION_TAG}" \
+                            --set api.image.repository="${params.BACKEND_IMAGE_REPO}" \
                             --set eventsJob.image.tag="${params.DB_INIT_VERSION_TAG}" \
+                            --set eventsJob.image.repository="${params.DB_INIT_IMAGE_REPO}" \
                             --set mariadb.auth.rootPassword="$MARIADB_ROOT_PASS"
                             """
                         }
