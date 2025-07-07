@@ -251,19 +251,24 @@ pipeline {
                     script {
                         sh '${BIN_PATH}/helm dependency update'
                         if (env.EVENTS_APP_EXISTS == 'false') {
-                            sh """
-                            ${BIN_PATH}/helm install events-app . \
-                            --set website.image.tag=${params.FRONTEND_IMAGE_TAG} \
-                            --set backend.image.tag=${params.BACKEND_IMAGE_TAG} \
-                            --set eventsJob.image.tag=${params.DB_INIT_VERSION_TAG}
-                            """
+                            try {
+                                sh """
+                                ${BIN_PATH}/helm install events-app . \
+                                --set website.image.tag=${params.FRONTEND_VERSION_TAG} \
+                                --set backend.image.tag=${params.BACKEND_VERSION_TAG} \
+                                --set eventsJob.image.tag=${params.DB_INIT_VERSION_TAG}
+                                """
+                            } catch (Exception e) {
+                                echo "Failed to install events-app: ${e.getMessage()}"
+                                sh '${BIN_PATH}/helm uninstall events-app'
+                            }
                         } else {
                             def mariadb_root_password = sh(script: '$(kubectl get secret --namespace "default" events-app-mariadb -o jsonpath="{.data.mariadb-root-password}" | base64 -d)')
                             env.MARIADB_ROOT_PASS = mariadb_root_password
                             sh """
                             ${BIN_PATH}/helm upgrade events-app . \
-                            --set website.image.tag=${params.FRONTEND_IMAGE_TAG} \
-                            --set backend.image.tag=${params.BACKEND_IMAGE_TAG} \
+                            --set website.image.tag=${params.FRONTEND_VERSION_TAG} \
+                            --set backend.image.tag=${params.BACKEND_VERSION_TAG} \
                             --set eventsJob.image.tag=${params.DB_INIT_VERSION_TAG} \
                             --set mariadb.auth.rootPassword=$MARIADB_ROOT_PASS
                             """
@@ -292,8 +297,8 @@ pipeline {
 //                         returnStdout: true
 //                     ).trim()
 
-//                     def newImage = "wburgis/devops-er-backend:${env.BACKEND_IMAGE_TAG}"
-//                     def newVersion = env.BACKEND_IMAGE_TAG.replace('.', '-')
+//                     def newImage = "wburgis/devops-er-backend:${env.BACKEND_VERSION_TAG}"
+//                     def newVersion = env.BACKEND_VERSION_TAG.replace('.', '-')
 
 //                     if (currentImage != newImage) {
 //                         echo "New image detected: ${newImage}. Updating deployment..."
@@ -334,8 +339,8 @@ pipeline {
 //                     ).trim()
  
 
-//                     def newImage = "wburgis/devops-er-frontend:${env.FRONTEND_IMAGE_TAG}"
-//                     def newVersion = env.FRONTEND_IMAGE_TAG.replace('.', '-')
+//                     def newImage = "wburgis/devops-er-frontend:${env.FRONTEND_VERSION_TAG}"
+//                     def newVersion = env.FRONTEND_VERSION_TAG.replace('.', '-')
 
 //                     echo "Current image: ${currentImage}"
 //                     echo "New image: ${newImage}"
