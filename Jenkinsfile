@@ -267,7 +267,8 @@ pipeline {
                                 error "Failed to deploy events-app, rolling back"
                             }
                         } else {
-                            def mariadb_root_password = sh(script: '$(${BIN_PATH}/kubectl get secret --namespace "default" events-app-mariadb -o jsonpath="{.data.mariadb-root-password}" | base64 -d)')
+                            def mariadb_root_password = sh(script: '${BIN_PATH}/kubectl get secret --namespace "default" events-app-mariadb -o jsonpath="{.data.mariadb-root-password}" | base64 -d')
+                            env.MARIADB_ROOT_PASS = mariadb_root_password
                             sh """
                             ${BIN_PATH}/helm upgrade events-app . -f values.yaml \
                             --set website.image.tag="${params.FRONTEND_VERSION_TAG}" \
@@ -276,7 +277,7 @@ pipeline {
                             --set api.image.repository="${params.BACKEND_IMAGE_REPO}" \
                             --set eventsJob.image.tag="${params.DB_INIT_VERSION_TAG}" \
                             --set eventsJob.image.repository="${params.DB_INIT_IMAGE_REPO}" \
-                            --set mariadb.auth.rootPassword="${mariadb_root_password}"
+                            --set mariadb.auth.rootPassword="$MARIADB_ROOT_PASS"
                             """
                         }
                         sh '''
