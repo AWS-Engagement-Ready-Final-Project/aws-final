@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'node:20-bullseye'
+            args '--user 0:0'
+        }
+    }
     parameters {
         string(name: 'SOURCE_DIR', defaultValue: '', description: 'Path to JS project directory')
     }
@@ -10,8 +15,12 @@ pipeline {
                     if (fileExists(params.SOURCE_DIR)) {
                         echo "🔍 Running JS tests in ${params.SOURCE_DIR}"
                         dir(params.SOURCE_DIR) {
-                            sh 'npm install || true'
-                            def result = sh(script: 'npm test', returnStatus: true)
+                            // Fast install & ignore audit/errors
+                            sh 'npm ci --prefer-offline --no-audit --progress=false || true'
+                            def result = sh(
+                                script: 'npm test',
+                                returnStatus: true
+                            )
                             if (result != 0) {
                                 echo "⚠️ JS tests failed in ${params.SOURCE_DIR}"
                             } else {
