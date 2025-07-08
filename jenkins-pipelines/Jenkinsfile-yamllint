@@ -5,35 +5,14 @@ pipeline {
         string(name: 'YAML_DIR', defaultValue: '', description: 'Directory to lint')
     }
 
-    environment {
-        PATH = "${WORKSPACE}/.local/bin:${PATH}"
-        PIP_CACHE_DIR = "${WORKSPACE}/.pip-cache"
-    }
-
     stages {
-        stage('Install Python + pip + yamllint') {
-            steps {
-                script {
-                    sh '''
-                        set -e
-                        echo "Checking if python3 is installed..."
-                        if ! command -v python3 >/dev/null 2>&1; then
-                            echo "Python3 not found. Installing..."
-                            apt-get update && apt-get install -y python3 python3-pip
-                        fi
-
-                        echo "Upgrading pip..."
-                        python3 -m pip install --upgrade --user pip
-
-                        echo "Installing yamllint..."
-                        python3 -m pip install --user yamllint
-                        yamllint --version
-                    '''
+        stage('Yamllint Scan') {
+            agent {
+                docker {
+                    image 'cytopia/yamllint:latest'
+                    args '--entrypoint=""'
                 }
             }
-        }
-
-        stage('Yamllint Scan') {
             steps {
                 script {
                     if (fileExists(params.YAML_DIR)) {
