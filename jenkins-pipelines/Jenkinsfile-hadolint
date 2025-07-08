@@ -1,21 +1,30 @@
 pipeline {
     agent any
+
     parameters {
-        string(name: 'DOCKERFILE_PATH', defaultValue: '', description: 'Path to Dockerfile')
+        string(name: 'DOCKERFILE_PATH', defaultValue: '', description: 'Path to Dockerfile to lint')
     }
+
+    environment {
+        HADOLINT_BIN = "${WORKSPACE}/.local/bin/hadolint"
+        PATH = "${WORKSPACE}/.local/bin:${PATH}"
+    }
+
     stages {
         stage('Install hadolint') {
             steps {
-                sh '''
-                    if ! command -v hadolint &>/dev/null; then
+                script {
+                    sh '''
+                        set -e
                         echo "Installing hadolint..."
-                        curl -LO https://github.com/hadolint/hadolint/releases/latest/download/hadolint-Linux-x86_64
-                        chmod +x hadolint-Linux-x86_64
-                        mv hadolint-Linux-x86_64 ~/.local/bin/hadolint || sudo mv hadolint-Linux-x86_64 /usr/local/bin/hadolint
-                    else
-                        echo "✅ hadolint already installed"
-                    fi
-                '''
+                        mkdir -p ${WORKSPACE}/.local/bin
+                        curl -sSL -o hadolint-Linux-x86_64 https://github.com/hadolint/hadolint/releases/latest/download/hadolint-Linux-x86_64
+                        mv hadolint-Linux-x86_64 ${HADOLINT_BIN}
+                        chmod +x ${HADOLINT_BIN}
+                        echo "✅ hadolint installed at ${HADOLINT_BIN}"
+                        ${HADOLINT_BIN} --version
+                    '''
+                }
             }
         }
 
@@ -24,14 +33,17 @@ pipeline {
                 script {
                     if (fileExists(params.DOCKERFILE_PATH)) {
                         echo "🔍 Running hadolint on ${params.DOCKERFILE_PATH}"
-                        def result = sh(script: "hadolint ${params.DOCKERFILE_PATH}", returnStatus: true)
-                        if (result != 0) {
-                            echo "⚠️ hadolint found issues in ${params.DOCKERFILE_PATH}"
+                        def result = sh(
+                            script: "${HADOLINT_BIN} ${params.DOCKERFILE_PATH} || true",
+                            returnStdout: true
+                        ).trim()
+                        if (result) {
+                            echo "⚠️ hadolint found issues:\n${result}"
                         } else {
                             echo "✅ hadolint passed cleanly for ${params.DOCKERFILE_PATH}"
                         }
                     } else {
-                        echo "❌ hadolint skipped: file '${params.DOCKERFILE_PATH}' not found"
+                        echo "❌ Hadolint skipped: Dockerfile '${params.DOCKERFILE_PATH}' not found"
                     }
                 }
             }
