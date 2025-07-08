@@ -1,44 +1,39 @@
-pipeline {
-    agent any
-    environment {
-        PATH = "${env.HOME}/.local/bin:${env.PATH}"
+node {
+    stage('Checkout') {
+        checkout scm
     }
-    parameters {
-        string(name: 'SOURCE_DIR', defaultValue: 'jenkins-pipelines/tests', description: 'Directory to lint')
-    }
-    stages {
-        stage('Install eslint') {
-            steps {
-                script {
-                    sh '''
-                        mkdir -p ~/.local/bin
-                        npm config set prefix ~/.local
-                        npm install -g eslint
-                        ~/.local/bin/eslint --version
-                    '''
+
+    withEnv(["PATH+LOCAL=${env.HOME}/.local/bin:${env.PATH}"]) {
+        docker.image('node:20-alpine').inside("-u 111:113 -v $WORKSPACE:/app -w /app") {
+
+            stage('Install dependencies & ESLint') {
+                dir('frontend') {
+                    // Create a local .npm cache folder
+                    sh 'mkdir -p .npm-cache'
+
+                    // Install dependencies with custom cache dir
+                    sh 'npm install --cache .npm-cache'
+
+                    // Check eslint version (fail-safe)
+                    sh 'npx --cache .npm-cache eslint --version || true'
                 }
             }
-        }
 
-        stage('ESLint Scan') {
-            steps {
-                script {
-                    if (fileExists(params.SOURCE_DIR)) {
-                        echo "🔍 Running eslint on ${params.SOURCE_DIR}"
-                        def result = sh(
-                            script: "eslint ${params.SOURCE_DIR} || true",
-                            returnStatus: true
-                        )
-                        if (result != 0) {
-                            echo "⚠️ eslint found issues in ${params.SOURCE_DIR}"
-                        } else {
-                            echo "✅ eslint passed cleanly for ${params.SOURCE_DIR}"
-                        }
+            stage('Run ESLint') {
+                dir('frontend') {
+                    echo "🔍 Running ESLint in frontend (allow failures)"
+                    def result = sh(
+                        script: 'npx --cache .npm-cache eslint . || true',
+                        returnStatus: true
+                    )
+                    if (result != 0) {
+                        echo "⚠️ ESLint found issues (exit code: ${result})"
                     } else {
-                        echo "❌ ESLint skipped: directory '${params.SOURCE_DIR}' not found"
+                        echo "✅ ESLint passed cleanly"
                     }
                 }
             }
-        }
-    }
-}
+
+        } // docker
+    } // withEnv
+} // node
