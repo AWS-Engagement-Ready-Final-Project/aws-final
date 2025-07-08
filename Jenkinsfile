@@ -216,9 +216,12 @@ pipeline {
         stage('Scan backend Docker image with Trivy') {
             steps {
                 script {
+                    def imageToScan = "${params.BACKEND_IMAGE_REPO}:${params.BACKEND_VERSION_TAG}"
+                    echo "🎯 About to scan backend image: ${imageToScan}"
+
                     build job: 'trivy-scan-pipeline',
                         parameters: [
-                            string(name: 'IMAGE', value: "${params.BACKEND_IMAGE_REPO}:${params.BACKEND_VERSION_TAG}")
+                            string(name: 'IMAGE', value: imageToScan)
                         ],
                         wait: true
                 }
