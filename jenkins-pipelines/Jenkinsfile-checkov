@@ -1,28 +1,33 @@
 pipeline {
     agent any
-    parameters {
-        string(name: 'IAC_DIR', defaultValue: '', description: 'Path to IaC directory')
-    }
-    stages {
-        stage('Install checkov') {
-            steps {
-                sh 'pip install --user checkov || true'
-            }
-        }
 
+    parameters {
+        string(name: 'CHECKOV_DIR', defaultValue: 'helm/events-app', description: 'Directory to scan')
+    }
+
+    stages {
         stage('Checkov Scan') {
+            agent {
+                docker {
+                    image 'bridgecrew/checkov:latest'
+                    args '--entrypoint=""' // to avoid conflicts with entrypoints
+                }
+            }
             steps {
                 script {
-                    if (fileExists(params.IAC_DIR)) {
-                        echo "🔍 Running checkov on ${params.IAC_DIR}"
-                        def result = sh(script: "checkov -d ${params.IAC_DIR} --quiet --compact", returnStatus: true)
-                        if (result != 0) {
-                            echo "⚠️ checkov found issues in ${params.IAC_DIR}"
+                    if (fileExists(params.CHECKOV_DIR)) {
+                        echo "🔍 Running checkov on ${params.CHECKOV_DIR}"
+                        def result = sh(
+                            script: "checkov -d ${params.CHECKOV_DIR} --quiet --compact || true",
+                            returnStdout: true
+                        ).trim()
+                        if (result) {
+                            echo "⚠️ Checkov found issues:\n${result}"
                         } else {
-                            echo "✅ checkov passed cleanly for ${params.IAC_DIR}"
+                            echo "✅ Checkov passed cleanly for ${params.CHECKOV_DIR}"
                         }
                     } else {
-                        echo "❌ checkov skipped: directory '${params.IAC_DIR}' not found"
+                        echo "❌ Checkov skipped: directory '${params.CHECKOV_DIR}' not found"
                     }
                 }
             }
