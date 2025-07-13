@@ -17,8 +17,8 @@ pipeline {
         string(name: 'DOCKERHUB_CREDENTIALS_ID', defaultValue: '5cd81998-a923-4dc4-8b0c-a3d5239f9661', description: 'The credentials to authenticate with DockerHub (if using dockerhub as the image repo type)')
         booleanParam(name: 'SHOULD_BUILD_IMAGES', defaultValue: true, description: 'Whether this pipeline should build new images before deploying')
         // in a real-world pipeline, the code for these images would live in separate repos and be versioned independently
-        string(name: 'FRONTEND_VERSION_TAG', defaultValue: '1.0', description: 'The version tag to use to build and pull the frontend docker image')
-        string(name: 'BACKEND_VERSION_TAG', defaultValue: '1.0', description: 'The version tag to use to build and pull the backend docker image')
+        string(name: 'FRONTEND_VERSION_TAG', defaultValue: '1.1', description: 'The version tag to use to build and pull the frontend docker image')
+        string(name: 'BACKEND_VERSION_TAG', defaultValue: '1.1', description: 'The version tag to use to build and pull the backend docker image')
         string(name: 'DB_INIT_VERSION_TAG', defaultValue: '1.0', description: 'The version tag to use to build and pull the db_init docker image')
     }
 
