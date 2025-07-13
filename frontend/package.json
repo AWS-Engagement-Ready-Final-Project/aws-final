@@ -2,7 +2,6 @@
   "name": "sample",
   "version": "1.0.0",
   "description": "",
-  "type": "module",
   "main": "server.js",
   "scripts": {
     "start": "SERVER=http://localhost:8082 node server.js",

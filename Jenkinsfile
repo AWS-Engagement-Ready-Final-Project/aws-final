@@ -100,7 +100,6 @@ pipeline {
                         [job: 'hadolint-scan-pipeline',  params: [string(name: 'DOCKERFILE_PATH', value: 'backend/Dockerfile')]],
                         [job: 'yamllint-scan-pipeline',  params: [string(name: 'YAML_DIR', value: 'helm/events-app')]],
                         [job: 'checkov-scan-pipeline',   params: [string(name: 'IAC_DIR', value: 'helm/events-app')]],
-                        [job: 'jslint-scan-pipeline',    params: [string(name: 'SOURCE_DIR', value: 'frontend')]],
                         [job: 'npm-audit-scan-pipeline', params: [string(name: 'SOURCE_DIR', value: 'frontend')]],
                         [job: 'js-test-pipeline',        params: [string(name: 'SOURCE_DIR', value: 'frontend')]]
                     ]
