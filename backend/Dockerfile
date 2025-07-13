@@ -1,5 +1,5 @@
 # Use aws public image
-FROM public.ecr.aws/docker/library/node:slim
+FROM public.ecr.aws/docker/library/node:24.2.0-slim
 # Copy application code.
 COPY . /app/
 # Change the working directory
