@@ -75,7 +75,7 @@ and all recommended plugins
 6. In the "Pipeline" section, select "Pipeline script from SCM." Under "SCM" choose "Git" and then paste `https://github.com/AWS-Engagement-Ready-Final-Project/aws-final` (or the name of your forked repo) into the "Repository URL" field. For the "Branch Specifier", enter `*/main` and ensure `Jenkinsfile` is the value for "Script Path".
 7. Click "Save".
 
-### Initial Kubernetes Setup
+### Initial Kubernetes Setup (taken care of in pipeline)
 1.  Navigate to the `kubernetes-config` directory in this repository: `cd kubernetes-config`.
 2. Run the following command to create a new cluster and associated resources for it using EKSCTL: `eksctl create cluster -f cluster.yaml`.
 3. Wait for all resources to spin up successfully without error messages.
